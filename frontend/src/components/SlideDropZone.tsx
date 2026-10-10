@@ -137,7 +137,7 @@ export function SlideDropZone({ files, onAdd, onRemove }: SlideDropZoneProps) {
         )}
       </AnimatePresence>
 
-      <ul className="flex flex-col gap-2 empty:hidden [&:not(:empty)]:mt-3">
+      <ul className="flex flex-col gap-2 empty:hidden not-empty:mt-3">
         <AnimatePresence initial={false}>
           {files.map((slide) => (
             <motion.li
