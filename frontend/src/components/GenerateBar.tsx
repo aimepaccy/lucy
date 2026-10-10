@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Mic, NotebookPen, Presentation } from 'lucide-react'
-import { GenerateButton } from '@/components/GenerateButton'
+import { Loader2, Mic, NotebookPen, Presentation, Sparkles } from 'lucide-react'
+import { buttonVariants } from '@/components/ui/button'
 import { formatDuration } from '@/lib/format'
 import { rise, spring } from '@/lib/motion'
+import { cn } from '@/lib/utils'
 import type { Recording } from '@/types'
 
 type GenerateBarProps = {
@@ -35,18 +36,7 @@ export function GenerateBar({ notesWords, recording, slideCount }: GenerateBarPr
 
   return (
     <motion.div variants={rise} className="sticky bottom-4 z-20">
-      <div className="relative rounded-2xl border bg-card/95 p-3 shadow-lg backdrop-blur-xl sm:p-4">
-        <AnimatePresence>
-          {enabled && (
-            <motion.span
-              aria-hidden="true"
-              className="border-beam"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-            />
-          )}
-        </AnimatePresence>
+      <div className="rounded-2xl border bg-card/95 p-3 shadow-lg backdrop-blur-xl sm:p-4">
         <p role="status" className="sr-only">
           {announcement}
         </p>
@@ -82,7 +72,31 @@ export function GenerateBar({ notesWords, recording, slideCount }: GenerateBarPr
             </AnimatePresence>
           </div>
 
-          <GenerateButton enabled={enabled} working={state === 'working'} onClick={() => setState('working')} />
+          <motion.button
+            type="button"
+            disabled={!enabled}
+            onClick={() => setState('working')}
+            whileHover={enabled ? { scale: 1.03 } : undefined}
+            whileTap={enabled ? { scale: 0.97 } : undefined}
+            transition={spring}
+            className={cn(
+              buttonVariants({ size: 'lg' }),
+              'relative h-11 overflow-hidden rounded-xl px-6 text-[0.95rem] disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100',
+              enabled && 'shadow-[0_10px_34px_-8px_var(--glow)]',
+            )}
+          >
+            {enabled && (
+              <motion.span
+                aria-hidden="true"
+                className="absolute inset-y-0 left-0 w-1/3 bg-linear-to-r from-transparent via-white/35 to-transparent"
+                initial={{ x: '-120%' }}
+                animate={{ x: '420%' }}
+                transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 2.4, ease: 'easeInOut' }}
+              />
+            )}
+            {state === 'working' ? <Loader2 className="motion-safe:animate-spin" /> : <Sparkles />}
+            {state === 'working' ? 'Preparing study pack' : 'Generate study pack'}
+          </motion.button>
         </div>
 
         <AnimatePresence>

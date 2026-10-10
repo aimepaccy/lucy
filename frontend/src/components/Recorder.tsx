@@ -67,8 +67,6 @@ export function Recorder({ onComplete, onDiscard }: RecorderProps) {
   return (
     <Panel
       icon={Mic}
-      step={2}
-      active={status === 'recording'}
       title="Recording"
       description="Record the role-played round as it happens."
       aside={

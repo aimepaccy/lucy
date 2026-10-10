@@ -11,6 +11,5 @@ export const stagger: Variants = {
 
 export const rise: Variants = {
   hidden: { opacity: 0, y: 18, filter: 'blur(6px)' },
-  // Removing the filter afterwards matters: any filter on a parent switches off backdrop blur inside it.
-  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: softSpring, transitionEnd: { filter: 'none' } },
+  show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: softSpring },
 }

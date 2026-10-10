@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "@fontsource-variable/inter";
-@import "@fontsource/instrument-serif/latin-400-italic.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -56,7 +55,6 @@
 /* Hands the tokens to Tailwind, so `bg-card` or `text-primary` work. */
 @theme inline {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
   --radius-sm: calc(var(--radius) - 6px);
   --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
@@ -95,71 +93,6 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv11", "ss01";
-  }
-}
-
-/* Border beam: a light that travels around the edge of an active card. */
-@property --beam-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
-@keyframes beam-spin {
-  to {
-    --beam-angle: 360deg;
-  }
-}
-
-@keyframes shimmer {
-  to {
-    background-position: -200% center;
-  }
-}
-
-@layer components {
-  .border-beam {
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    padding: 1.5px;
-    pointer-events: none;
-    background: conic-gradient(
-      from var(--beam-angle),
-      transparent 0deg 250deg,
-      var(--primary) 310deg,
-      oklch(0.85 0.1 180) 340deg,
-      transparent 360deg
-    );
-    mask:
-      linear-gradient(#000 0 0) content-box exclude,
-      linear-gradient(#000 0 0);
-    animation: beam-spin 3.2s linear infinite;
-  }
-
-  .text-shimmer {
-    background-image: linear-gradient(
-      100deg,
-      var(--primary) 20%,
-      oklch(0.85 0.09 185) 40%,
-      var(--primary) 60%,
-      var(--accent-foreground) 80%
-    );
-    background-size: 200% auto;
-    background-clip: text;
-    color: transparent;
-    animation: shimmer 6s linear infinite;
-  }
-
-  .grain {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .border-beam,
-  .text-shimmer {
-    animation: none;
   }
 }
 

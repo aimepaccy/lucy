@@ -16,7 +16,6 @@ type NotesEditorProps = {
 export function NotesEditor({ value, onChange, className }: NotesEditorProps) {
   const words = countWords(value)
   const [cleared, setCleared] = useState<string | null>(null)
-  const [focused, setFocused] = useState(false)
 
   useEffect(() => {
     if (cleared === null) return
@@ -37,8 +36,6 @@ export function NotesEditor({ value, onChange, className }: NotesEditorProps) {
   return (
     <Panel
       icon={NotebookPen}
-      step={1}
-      active={focused}
       title="Notes"
       description="Teaching points, mnemonics, anything the teacher stressed."
       className={className}
@@ -80,8 +77,6 @@ export function NotesEditor({ value, onChange, className }: NotesEditorProps) {
           setCleared(null)
           onChange(event.target.value)
         }}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
         maxLength={MAX_CHARS}
         placeholder={'For example:\nCURB-65 for pneumonia severity\nAlways check inhaler technique before stepping up asthma treatment'}
         className="min-h-64 flex-1 resize-none bg-background/60 text-[0.95rem] leading-relaxed lg:min-h-96"
