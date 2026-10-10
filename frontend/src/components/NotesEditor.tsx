@@ -1,8 +1,11 @@
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { NotebookPen } from 'lucide-react'
 import { Panel } from '@/components/Panel'
 import { Textarea } from '@/components/ui/textarea'
 import { countWords } from '@/lib/format'
+
+const MAX_CHARS = 20000
 
 type NotesEditorProps = {
   value: string
@@ -12,6 +15,23 @@ type NotesEditorProps = {
 
 export function NotesEditor({ value, onChange, className }: NotesEditorProps) {
   const words = countWords(value)
+  const [cleared, setCleared] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (cleared === null) return
+    const id = window.setTimeout(() => setCleared(null), 8000)
+    return () => window.clearTimeout(id)
+  }, [cleared])
+
+  function clear() {
+    setCleared(value)
+    onChange('')
+  }
+
+  function undo() {
+    if (cleared !== null) onChange(cleared)
+    setCleared(null)
+  }
 
   return (
     <Panel
@@ -33,6 +53,17 @@ export function NotesEditor({ value, onChange, className }: NotesEditorProps) {
             </motion.span>
           </AnimatePresence>{' '}
           {words === 1 ? 'word' : 'words'}
+          {value.length > MAX_CHARS * 0.9 && ` (${value.length.toLocaleString()} of ${MAX_CHARS.toLocaleString()} characters)`}
+          {value && (
+            <button type="button" onClick={clear} aria-label="Clear notes" className="ml-3 font-medium text-primary hover:underline">
+              Clear
+            </button>
+          )}
+          {!value && cleared && (
+            <button type="button" onClick={undo} aria-label="Undo clearing notes" className="ml-3 font-medium text-primary hover:underline">
+              Undo clear
+            </button>
+          )}
         </span>
       }
     >
@@ -42,8 +73,11 @@ export function NotesEditor({ value, onChange, className }: NotesEditorProps) {
       <Textarea
         id="notes"
         value={value}
-        onChange={(event) => onChange(event.target.value)}
-        maxLength={20000}
+        onChange={(event) => {
+          setCleared(null)
+          onChange(event.target.value)
+        }}
+        maxLength={MAX_CHARS}
         placeholder={'For example:\nCURB-65 for pneumonia severity\nAlways check inhaler technique before stepping up asthma treatment'}
         className="min-h-64 flex-1 resize-none bg-background/60 text-[0.95rem] leading-relaxed lg:min-h-96"
       />

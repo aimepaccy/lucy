@@ -25,7 +25,7 @@ export function ThemeToggle({ theme, onChange }: ThemeToggleProps) {
     const rect = event.currentTarget.getBoundingClientRect()
     const x = rect.left + rect.width / 2
     const y = rect.top + rect.height / 2
-    const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y))
+    const radius = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y))
 
     const transition = document.startViewTransition(() => flushSync(() => onChange(next)))
     transition.ready.then(() => {

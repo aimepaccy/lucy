@@ -1,3 +1,4 @@
+import { useId } from 'react'
 import { motion } from 'motion/react'
 
 const bars = [
@@ -9,15 +10,17 @@ const bars = [
 ]
 
 export function LucyMark({ className }: { className?: string }) {
+  const gradientId = useId()
+
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="lucy-mark" x1="0" y1="0" x2="1" y2="1">
+        <linearGradient id={gradientId} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="oklch(0.74 0.12 190)" />
           <stop offset="1" stopColor="oklch(0.5 0.11 228)" />
         </linearGradient>
       </defs>
-      <rect width="32" height="32" rx="9" fill="url(#lucy-mark)" />
+      <rect width="32" height="32" rx="9" fill={`url(#${gradientId})`} />
       {bars.map((bar, i) => (
         <motion.rect
           key={bar.x}

@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import { motion, type Variants } from 'motion/react'
 import { rise } from '@/lib/motion'
 
@@ -13,9 +14,11 @@ export function Hero() {
     <motion.section variants={wordStagger} className="max-w-3xl pt-4 sm:pt-8">
       <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
         {words.map((word, i) => (
-          <motion.span key={i} variants={rise} className="mr-[0.25em] inline-block">
-            {word}
-          </motion.span>
+          <Fragment key={i}>
+            <motion.span variants={rise} className="inline-block">
+              {word}
+            </motion.span>{' '}
+          </Fragment>
         ))}
         <motion.span
           variants={rise}
@@ -26,7 +29,7 @@ export function Hero() {
       </h1>
       <motion.p variants={rise} className="mt-4 max-w-2xl text-base text-pretty text-muted-foreground sm:text-lg">
         Record a role-played round, add your notes and slides, and Lucy builds a summary, flashcards,
-        an exam-style quiz and further reading from trusted sources.
+        an exam-style quiz and further reading from credible sources.
       </motion.p>
     </motion.section>
   )

@@ -2,7 +2,7 @@ import type { Transition, Variants } from 'motion/react'
 
 // Shared springs so every movement in the app has the same feel.
 export const spring: Transition = { type: 'spring', stiffness: 380, damping: 30 }
-export const softSpring: Transition = { type: 'spring', stiffness: 160, damping: 22 }
+const softSpring: Transition = { type: 'spring', stiffness: 160, damping: 22 }
 
 export const stagger: Variants = {
   hidden: {},

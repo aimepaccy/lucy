@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Loader2, Mic, NotebookPen, Presentation, Sparkles } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
@@ -24,16 +24,24 @@ export function GenerateBar({ notesWords, recording, slideCount }: GenerateBarPr
 
   const enabled = chips.length > 0 && state !== 'working'
 
-  function generate() {
-    setState('working')
-    window.setTimeout(() => setState('notice'), 1600)
-  }
+  // Simulated wait until the back end exists.
+  useEffect(() => {
+    if (state !== 'working') return
+    const id = window.setTimeout(() => setState('notice'), 1600)
+    return () => window.clearTimeout(id)
+  }, [state])
+
+  const announcement =
+    state === 'working' ? 'Preparing study pack' : state === 'notice' ? 'Study pack generation is coming in a later version.' : ''
 
   return (
     <motion.div variants={rise} className="sticky bottom-4 z-20">
       <div className="rounded-2xl border bg-card/95 p-3 shadow-lg backdrop-blur-xl sm:p-4">
+        <p role="status" className="sr-only">
+          {announcement}
+        </p>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="flex min-h-8 flex-1 flex-wrap items-center gap-2" aria-live="polite">
+          <div className="flex min-h-8 flex-1 flex-wrap items-center gap-2">
             <AnimatePresence mode="popLayout" initial={false}>
               {chips.length === 0 ? (
                 <motion.p
@@ -67,7 +75,7 @@ export function GenerateBar({ notesWords, recording, slideCount }: GenerateBarPr
           <motion.button
             type="button"
             disabled={!enabled}
-            onClick={generate}
+            onClick={() => setState('working')}
             whileHover={enabled ? { scale: 1.03 } : undefined}
             whileTap={enabled ? { scale: 0.97 } : undefined}
             transition={spring}
@@ -86,7 +94,7 @@ export function GenerateBar({ notesWords, recording, slideCount }: GenerateBarPr
                 transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 2.4, ease: 'easeInOut' }}
               />
             )}
-            {state === 'working' ? <Loader2 className="animate-spin" /> : <Sparkles />}
+            {state === 'working' ? <Loader2 className="motion-safe:animate-spin" /> : <Sparkles />}
             {state === 'working' ? 'Preparing study pack' : 'Generate study pack'}
           </motion.button>
         </div>
@@ -100,7 +108,7 @@ export function GenerateBar({ notesWords, recording, slideCount }: GenerateBarPr
               className="overflow-hidden text-sm text-muted-foreground"
             >
               <span className="block pt-3">
-                This is the interface preview. Study pack generation is connected in a later build stage.{' '}
+                This is a preview of the interface. Study pack generation is coming in a later version.{' '}
                 <button type="button" onClick={() => setState('ready')} className="font-medium text-primary hover:underline">
                   Dismiss
                 </button>

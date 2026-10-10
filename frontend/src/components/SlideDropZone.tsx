@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type DragEvent } from 'react'
+import { useRef, useState, type DragEvent } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { AlertCircle, CloudUpload, FileText, Presentation, X } from 'lucide-react'
 import { Panel } from '@/components/Panel'
@@ -10,6 +10,8 @@ import type { SlideFile } from '@/types'
 
 const MAX_FILES = 5
 const MAX_MB = 25
+let nextId = 0
+
 const ACCEPT = '.pdf,.pptx,application/pdf,application/vnd.openxmlformats-officedocument.presentationml.presentation'
 
 type SlideDropZoneProps = {
@@ -27,14 +29,9 @@ function kindOf(file: File): SlideFile['kind'] | null {
 
 export function SlideDropZone({ files, onAdd, onRemove }: SlideDropZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null)
+  const dropRef = useRef<HTMLButtonElement>(null)
   const [dragging, setDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (!error) return
-    const id = window.setTimeout(() => setError(null), 5000)
-    return () => window.clearTimeout(id)
-  }, [error])
 
   // A convenience check only. The server checks every file again, since anyone can bypass the browser.
   function addFiles(list: FileList | null) {
@@ -49,11 +46,11 @@ export function SlideDropZone({ files, onAdd, onRemove }: SlideDropZoneProps) {
       )
       if (!kind) problems.push(`${file.name} is not a PDF or .pptx file.`)
       else if (file.size > MAX_MB * 1024 * 1024) problems.push(`${file.name} is larger than ${MAX_MB} MB.`)
-      else if (duplicate) continue
+      else if (duplicate) problems.push(`${file.name} is already added.`)
       else if (files.length + accepted.length >= MAX_FILES) {
         problems.push(`You can add up to ${MAX_FILES} files.`)
         break
-      } else accepted.push({ id: crypto.randomUUID(), file, kind })
+      } else accepted.push({ id: `slide-${++nextId}`, file, kind })
     }
 
     if (accepted.length) onAdd(accepted)
@@ -78,6 +75,7 @@ export function SlideDropZone({ files, onAdd, onRemove }: SlideDropZoneProps) {
   return (
     <Panel icon={Presentation} title="Slides" description="The teaching slides, if there were any.">
       <motion.button
+        ref={dropRef}
         type="button"
         onClick={() => inputRef.current?.click()}
         onDragOver={handleDragOver}
@@ -131,7 +129,10 @@ export function SlideDropZone({ files, onAdd, onRemove }: SlideDropZoneProps) {
             className="flex items-center gap-2 overflow-hidden pt-3 text-sm text-destructive"
           >
             <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
-            {error}
+            <span className="flex-1">{error}</span>
+            <button type="button" onClick={() => setError(null)} aria-label="Dismiss message" className="rounded p-0.5 hover:bg-accent">
+              <X className="size-3.5" />
+            </button>
           </motion.p>
         )}
       </AnimatePresence>
@@ -160,7 +161,10 @@ export function SlideDropZone({ files, onAdd, onRemove }: SlideDropZoneProps) {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                onClick={() => onRemove(slide.id)}
+                onClick={() => {
+                  onRemove(slide.id)
+                  dropRef.current?.focus()
+                }}
                 aria-label={`Remove ${slide.file.name}`}
               >
                 <X />
