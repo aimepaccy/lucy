@@ -5,8 +5,10 @@ Last updated: 2026-10-10
 ## Status
 Phase 0 (setup) done: project files, plan (`docs/plan.md`), git repository, public GitHub repo `aimepaccy/lucy`.
 
+Groq key in `backend/.env` checked on 2026-10-10: valid (HTTP 200). Available models include `whisper-large-v3-turbo`, `openai/gpt-oss-120b` and `qwen/qwen3.8-27b`.
+
 ## Next
-1. Rugimbana: copy `backend/.env.example` to `backend/.env` and paste a Groq API key (from console.groq.com). Then the AI runs a check that the key works without printing it.
+1. Rugimbana: add the remaining lines from `backend/.env.example` to `backend/.env` (only `LLM_API_KEY` is there now). Not urgent; needed by phase 2.
 2. Phase 0 explain-back questions (see `LEARNING.md`, 2026-10-10).
 3. Phase 1: front-end shell. Starts with a preview of React, Vite, Tailwind, shadcn/ui and Motion.
 
@@ -14,7 +16,7 @@ Phase 0 (setup) done: project files, plan (`docs/plan.md`), git repository, publ
 None.
 
 ## Decisions
-- 2026-10-10: Name Lucy. GitHub repo `aimepaccy/lucy`; the local folder is still `notes-app` (rename it when VS Code is closed, then update the folder name in `_hub/projects.txt`).
+- 2026-10-10: Name Lucy. GitHub repo `aimepaccy/lucy`; local folder renamed from `notes-app` to `lucy`, and `_hub/projects.txt` updated.
 - 2026-10-10: Repo is public from the start, to show the build process. Consequence: no secrets, no patient data, and no mention of the university anywhere in the repo.
 - 2026-10-10: Inputs for v1: in-app recording and audio upload, typed notes, .pptx and PDF. Video upload and photos of handwritten notes deferred.
 - 2026-10-10: Only role-played or teaching audio, never real ward audio (patient information; free AI tiers may retain data).
