@@ -5,6 +5,7 @@ import { GenerateBar } from '@/components/GenerateBar'
 import { Header } from '@/components/Header'
 import { Hero } from '@/components/Hero'
 import { NotesEditor } from '@/components/NotesEditor'
+import { OutputPreview } from '@/components/OutputPreview'
 import { PrivacyNotice } from '@/components/PrivacyNotice'
 import { Recorder } from '@/components/Recorder'
 import { SlideDropZone } from '@/components/SlideDropZone'
@@ -45,6 +46,8 @@ export default function App() {
               />
             </motion.div>
           </div>
+
+          <OutputPreview />
 
           <GenerateBar notesWords={countWords(notes)} recording={recording} slideCount={slides.length} />
 

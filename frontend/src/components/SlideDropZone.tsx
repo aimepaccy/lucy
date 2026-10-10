@@ -73,7 +73,7 @@ export function SlideDropZone({ files, onAdd, onRemove }: SlideDropZoneProps) {
   }
 
   return (
-    <Panel icon={Presentation} title="Slides" description="The teaching slides, if there were any.">
+    <Panel icon={Presentation} step={3} active={dragging} title="Slides" description="The teaching slides, if there were any.">
       <motion.button
         ref={dropRef}
         type="button"
