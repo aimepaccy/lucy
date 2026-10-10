@@ -3,14 +3,17 @@
 Last updated: 2026-10-10
 
 ## Status
-Phase 0 (setup) done: project files, plan (`docs/plan.md`), git repository, public GitHub repo `aimepaccy/lucy`.
+Phase 0 (setup) done. Groq key checked and valid; `backend/.env` complete.
 
-Groq key in `backend/.env` checked on 2026-10-10: valid (HTTP 200). Available models include `whisper-large-v3-turbo`, `openai/gpt-oss-120b` and `qwen/qwen3.8-27b`.
-
-`backend/.env` complete (all template lines present). Phase 0 explain-back done (feedback in `LEARNING.md`).
+Phase 1 (front-end shell) done on 2026-10-10: input page with notes (with clear and undo), a simulated recorder, a slide drop zone, a sticky Generate bar, light and dark themes, a "What you get" preview of a study pack, and motion throughout. Quality review run; all must-fix and recommended items fixed. Explain-back done (feedback in `LEARNING.md`).
 
 ## Next
-1. Phase 1: front-end shell. Starts with a preview of React, Vite, Tailwind, shadcn/ui and Motion.
+1. Phase 2: back-end skeleton (FastAPI, an upload route, the front end talking to the back end). Starts with a preview of REST, HTTP, CORS and Pydantic.
+2. Carry-overs to their phases:
+   - Phase 3: add audio-file upload to the Recorder panel (v1 input in `docs/plan.md`); the microphone needs a secure context (HTTPS or localhost); turn the microphone off in effect cleanup.
+   - Phase 5: replace the Generate notice and the "Preview" badge with real states.
+   - Phase 10: the inline theme script in `index.html` needs a hash in the Content Security Policy; test the animated background on a low-end phone or laptop.
+3. Revisit with Rugimbana: effect cleanup (explain-back question 2 was missed).
 
 ## Blockers
 None.
@@ -28,4 +31,7 @@ None.
 - 2026-10-10: Look: calm clinical, light and dark.
 - 2026-10-10: Hosting: localhost while building, free hosting for demos (phase 10). Demos are one-on-one conversations, not formal pitches.
 - 2026-10-10: Learning mode: Walkthrough with occasional retyping; every phase fully explained, none skipped (see `AGENTS.md`).
+- 2026-10-10: Motion and look: smooth, purposeful motion (springs, staggered entrance, spotlight cards, a travelling border on the active card, magnetic Generate button), all switched off by the device's reduce-motion setting. Ideas from React Bits and Kokonut UI are rewritten in-house rather than installed, to avoid heavy dependencies and React Bits' Commons Clause licence.
+- 2026-10-10: Inter for text, Instrument Serif italic for accent words. Fonts served from our own files (no Google Fonts request).
+- 2026-10-10: Playwright adopted for checking the UI in a real browser (Edge); it becomes the end-to-end test tool in phase 10.
 - 2026-10-10: No license file yet (all rights reserved by default). Revisit before sharing widely.

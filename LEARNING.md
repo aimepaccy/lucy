@@ -20,3 +20,30 @@ Dated entries. For each session: concepts met, what clicked, mistakes worth reme
   2. Solid: change `.env` settings (URL, key, model), keep the code. Caveat added: a new provider keeps the app connected but not necessarily the same output quality, so re-test after switching.
   3. Half right. Correction: the AI does not search or propose sources at all; it only suggests search terms, and real APIs return real links. The reason is **hallucination**: LLMs produce plausible-looking references that may not exist, and "plausible" is the danger.
 - AI-tool feature: `/resume` reopens past Claude Code conversations, filed by folder path (renaming the folder hides old chats). Verdict: use it for continuity, but keep `PROGRESS.md` as the real record, since it travels with the repo.
+
+## 2026-10-10: Phase 1, front-end shell
+- **Browsers run three languages:** HTML (structure), CSS (appearance), JavaScript (behaviour). React, TypeScript, Vite and Tailwind all exist to produce those three more easily.
+- **Single-page application (SPA):** the page loads once; after that React redraws parts of it as state changes.
+- **Component:** a function that returns part of the screen. The page is a tree of components (`App` contains `NotesEditor`, `Recorder` and so on).
+- **Props and state:** props are inputs handed down by a parent (read-only); state is data a component remembers and changes, and changing it redraws the screen (`useState`).
+- **One-way data flow (data down, events up):** shared state lives in the common parent (`App`), goes down as props, and changes come back up through functions passed as props (`onComplete={setRecording}`). Siblings never talk directly.
+- **Controlled input:** the text box shows React's state and reports each keystroke; state is the single source of truth.
+- **Derived values:** calculate what you can (word count, whether Generate is enabled) instead of storing a second copy that can drift (the BMI rule).
+- **Side effects and cleanup (`useEffect`):** timers, storage and page changes happen outside drawing. The cleanup function stops them when they are no longer needed; without it they pile up (memory leak).
+- **TypeScript union types:** `'idle' | 'recording' | 'paused' | 'done'` makes a typo a build error instead of a silent bug.
+- **Design tokens:** colours defined once as named values; dark mode swaps the values, not the components. Same principle as `.env`: configuration vs code.
+- **Dev server vs build:** `npm run dev` translates code on the fly for development; `npm run build` produces the plain files that get hosted. `localhost:5173` is "this computer, port 5173".
+- **Accessibility:** labels for screen readers, keyboard focus that follows the user, status announcements (`role="status"`), and respecting "reduce motion".
+- **Trust boundary again:** browser file checks are for convenience; the server must check again.
+- Lessons from the build and the quality review:
+  - **Supply chain:** the shadcn installer misread our import alias and installed an unrelated npm package (`cn`). Check what installers add to `package.json`.
+  - **Filters break glass:** any CSS `filter` on a parent disables `backdrop-filter` blur inside it; the entrance animation now removes its filter when it ends.
+  - **Hover is not touch:** a tap fires both hover and click, so the flashcard flipped and unflipped. Interactions must be designed for touch, mouse and keyboard.
+  - **Stable function identity:** a function created inside a component is new on every render; when an effect or ref depends on it, wrap it in `useCallback` so it does not re-run.
+  - **Undo beats confirm:** a one-click Clear got an "Undo clear" instead of an "Are you sure?" box.
+- Retype: added the "Clear" button to the notes panel (conditional rendering, events up). Worked first time; two stray spaces in closing tags tidied in review.
+- Explain-back answers:
+  1. Recorder to GenerateBar: named one-way data flow correctly, but described the Recorder as "retrieving" info. Correction: it sends data up by calling `onComplete` (which is `App`'s `setRecording`); `App` re-renders and passes `recording` down as a prop.
+  2. Missing cleanup: answered that pause would act like stop. Wrong way round: without cleanup nothing stops the old interval, so the timer keeps counting while paused and runs at double, then triple, speed after each resume. **Revisit.** (Strict Mode in development runs effects twice on purpose to expose this.)
+  3. Hard-coded dark colours: answered "everything black and a white flash". Correction: the cost is maintenance and consistency; colours scattered across many files, so a palette change or a new theme means editing every component. Tokens change in one place (the formulary principle).
+- AI-tool features: **Playwright** (scripted real-browser checks; caught four UI bugs before Rugimbana saw them; verdict: adopt, becomes end-to-end tests in phase 10). **Quality subagent** run in the background while feedback was written (parallel work).
