@@ -15,3 +15,8 @@ Dated entries. For each session: concepts met, what clicked, mistakes worth reme
   1. Why must the Groq API key live in the back end and never in the React code?
   2. If we want to switch from Groq to a local model next year, what do we change, and what stays the same?
   3. Why does the further-reading feature not just ask the AI for "five good references"?
+- Explain-back answers (2026-10-10, second session):
+  1. Right conclusion, imprecise reason ("the code is public"). The real reason: front-end code is downloaded to and runs on the user's device, so anyone can read it with developer tools, even if the repo were private. Principle: the **trust boundary**; nothing on the user's side can hold a secret.
+  2. Solid: change `.env` settings (URL, key, model), keep the code. Caveat added: a new provider keeps the app connected but not necessarily the same output quality, so re-test after switching.
+  3. Half right. Correction: the AI does not search or propose sources at all; it only suggests search terms, and real APIs return real links. The reason is **hallucination**: LLMs produce plausible-looking references that may not exist, and "plausible" is the danger.
+- AI-tool feature: `/resume` reopens past Claude Code conversations, filed by folder path (renaming the folder hides old chats). Verdict: use it for continuity, but keep `PROGRESS.md` as the real record, since it travels with the repo.

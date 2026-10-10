@@ -7,10 +7,10 @@ Phase 0 (setup) done: project files, plan (`docs/plan.md`), git repository, publ
 
 Groq key in `backend/.env` checked on 2026-10-10: valid (HTTP 200). Available models include `whisper-large-v3-turbo`, `openai/gpt-oss-120b` and `qwen/qwen3.8-27b`.
 
+`backend/.env` complete (all template lines present). Phase 0 explain-back done (feedback in `LEARNING.md`).
+
 ## Next
-1. Rugimbana: add the remaining lines from `backend/.env.example` to `backend/.env` (only `LLM_API_KEY` is there now). Not urgent; needed by phase 2.
-2. Phase 0 explain-back questions (see `LEARNING.md`, 2026-10-10).
-3. Phase 1: front-end shell. Starts with a preview of React, Vite, Tailwind, shadcn/ui and Motion.
+1. Phase 1: front-end shell. Starts with a preview of React, Vite, Tailwind, shadcn/ui and Motion.
 
 ## Blockers
 None.
