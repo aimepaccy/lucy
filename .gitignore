@@ -1,0 +1,36 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Node
+node_modules/
+dist/
+
+# Recordings and uploads stay local
+samples/
+uploads/
+*.webm
+*.m4a
+*.mp3
+*.wav
+*.mp4
+*.ogg
+*.oga
+*.opus
+*.aac
+*.flac
+
+# Test slides (often someone else's copyrighted material)
+*.pptx
+*.pdf
+
+# OS / editor
+Thumbs.db
+.DS_Store
+~$*
