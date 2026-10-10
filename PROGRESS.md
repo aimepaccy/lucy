@@ -5,7 +5,7 @@ Last updated: 2026-10-10
 ## Status
 Phase 0 (setup) done. Groq key checked and valid; `backend/.env` complete.
 
-Phase 1 (front-end shell) done on 2026-10-10: input page with notes (with clear and undo), a simulated recorder, a slide drop zone, a sticky Generate bar, light and dark themes, a "What you get" preview of a study pack, and motion throughout. Quality review run; all must-fix and recommended items fixed. Explain-back done (feedback in `LEARNING.md`).
+Phase 1 (front-end shell) done on 2026-10-10: input page with notes (with clear and undo), a simulated recorder, a slide drop zone, a sticky Generate bar, light and dark themes, and subtle motion. Quality review run; all must-fix and recommended items fixed. Explain-back done (feedback in `LEARNING.md`).
 
 ## Next
 1. Phase 2: back-end skeleton (FastAPI, an upload route, the front end talking to the back end). Starts with a preview of REST, HTTP, CORS and Pydantic.
@@ -31,7 +31,7 @@ None.
 - 2026-10-10: Look: calm clinical, light and dark.
 - 2026-10-10: Hosting: localhost while building, free hosting for demos (phase 10). Demos are one-on-one conversations, not formal pitches.
 - 2026-10-10: Learning mode: Walkthrough with occasional retyping; every phase fully explained, none skipped (see `AGENTS.md`).
-- 2026-10-10: Motion and look: smooth, purposeful motion (springs, staggered entrance, spotlight cards, a travelling border on the active card, magnetic Generate button), all switched off by the device's reduce-motion setting. Ideas from React Bits and Kokonut UI are rewritten in-house rather than installed, to avoid heavy dependencies and React Bits' Commons Clause licence.
-- 2026-10-10: Inter for text, Instrument Serif italic for accent words. Fonts served from our own files (no Google Fonts request).
+- 2026-10-10: Motion and look: subtle and purposeful (springs, staggered entrance, sliding lists, recording pulse, circular theme reveal), switched off by the device's reduce-motion setting. A richer upgrade (spotlight cards, travelling borders, serif accent, magnetic button, "What you get" bento) was built and then reverted the same evening: Rugimbana preferred the calmer original. It stays in git history (commit `ef045ee`) if wanted later. Ideas from component libraries are rewritten in-house, never installed.
+- 2026-10-10: Inter font, served from our own files (no Google Fonts request).
 - 2026-10-10: Playwright adopted for checking the UI in a real browser (Edge); it becomes the end-to-end test tool in phase 10.
 - 2026-10-10: No license file yet (all rights reserved by default). Revisit before sharing widely.
