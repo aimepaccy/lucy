@@ -1,20 +1,33 @@
-import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Loader2, Mic, NotebookPen, Presentation, Sparkles } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Loader2, Mic, NotebookPen, Presentation, Sparkles } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
-import { formatDuration } from '@/lib/format'
+import { formatDuration, formatFileSize } from '@/lib/format'
 import { rise, spring } from '@/lib/motion'
 import { cn } from '@/lib/utils'
-import type { Recording } from '@/types'
+import type { Recording, SendState, SessionReceipt } from '@/types'
 
 type GenerateBarProps = {
   notesWords: number
   recording: Recording | null
   slideCount: number
+  sendState: SendState
+  onGenerate: () => void
+  onDismiss: () => void
 }
 
-export function GenerateBar({ notesWords, recording, slideCount }: GenerateBarProps) {
-  const [state, setState] = useState<'ready' | 'working' | 'notice'>('ready')
+function describeReceipt({ notes_words, slides }: SessionReceipt, hasRecording: boolean) {
+  const parts = []
+  if (notes_words > 0) parts.push(`${notes_words} ${notes_words === 1 ? 'word' : 'words'} of notes`)
+  if (slides.length > 0) {
+    const bytes = slides.reduce((total, slide) => total + slide.size_bytes, 0)
+    parts.push(`${slides.length} slide ${slides.length === 1 ? 'file' : 'files'} (${formatFileSize(bytes)})`)
+  }
+  const recordingNote = hasRecording ? ' Recordings are not sent yet.' : ''
+  return `Lucy's server received ${parts.join(' and ')}.${recordingNote} Study pack generation is coming soon.`
+}
+
+export function GenerateBar({ notesWords, recording, slideCount, sendState, onGenerate, onDismiss }: GenerateBarProps) {
+  const sending = sendState.status === 'sending'
 
   const chips = [
     notesWords > 0 && { key: 'notes', icon: NotebookPen, label: `${notesWords} words of notes` },
@@ -22,17 +35,16 @@ export function GenerateBar({ notesWords, recording, slideCount }: GenerateBarPr
     slideCount > 0 && { key: 'slides', icon: Presentation, label: `${slideCount} slide ${slideCount === 1 ? 'file' : 'files'}` },
   ].filter((chip) => chip !== false && chip !== null)
 
-  const enabled = chips.length > 0 && state !== 'working'
+  const enabled = chips.length > 0 && !sending
 
-  // Simulated wait until the back end exists.
-  useEffect(() => {
-    if (state !== 'working') return
-    const id = window.setTimeout(() => setState('notice'), 1600)
-    return () => window.clearTimeout(id)
-  }, [state])
+  const message =
+    sendState.status === 'received'
+      ? describeReceipt(sendState.receipt, recording !== null)
+      : sendState.status === 'error'
+        ? sendState.message
+        : null
 
-  const announcement =
-    state === 'working' ? 'Preparing study pack' : state === 'notice' ? 'Study pack generation is coming in a later version.' : ''
+  const announcement = sending ? 'Sending to Lucy' : (message ?? '')
 
   return (
     <motion.div variants={rise} className="sticky bottom-4 z-20">
@@ -75,7 +87,7 @@ export function GenerateBar({ notesWords, recording, slideCount }: GenerateBarPr
           <motion.button
             type="button"
             disabled={!enabled}
-            onClick={() => setState('working')}
+            onClick={onGenerate}
             whileHover={enabled ? { scale: 1.03 } : undefined}
             whileTap={enabled ? { scale: 0.97 } : undefined}
             transition={spring}
@@ -94,26 +106,39 @@ export function GenerateBar({ notesWords, recording, slideCount }: GenerateBarPr
                 transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 2.4, ease: 'easeInOut' }}
               />
             )}
-            {state === 'working' ? <Loader2 className="motion-safe:animate-spin" /> : <Sparkles />}
-            {state === 'working' ? 'Preparing study pack' : 'Generate study pack'}
+            {sending ? <Loader2 className="motion-safe:animate-spin" /> : <Sparkles />}
+            {sending ? 'Sending to Lucy' : 'Generate study pack'}
           </motion.button>
         </div>
 
         <AnimatePresence>
-          {state === 'notice' && (
-            <motion.p
+          {message && (
+            <motion.div
+              key={sendState.status}
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
-              className="overflow-hidden text-sm text-muted-foreground"
+              className="overflow-hidden text-sm"
             >
-              <span className="block pt-3">
-                This is a preview of the interface. Study pack generation is coming in a later version.{' '}
-                <button type="button" onClick={() => setState('ready')} className="font-medium text-primary hover:underline">
-                  Dismiss
-                </button>
-              </span>
-            </motion.p>
+              <p
+                className={cn(
+                  'flex items-start gap-2 pt-3',
+                  sendState.status === 'error' ? 'text-destructive' : 'text-muted-foreground',
+                )}
+              >
+                {sendState.status === 'error' ? (
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                ) : (
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
+                )}
+                <span>
+                  {message}{' '}
+                  <button type="button" onClick={onDismiss} className="font-medium text-primary hover:underline">
+                    Dismiss
+                  </button>
+                </span>
+              </p>
+            </motion.div>
           )}
         </AnimatePresence>
       </div>

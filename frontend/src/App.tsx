@@ -10,15 +10,32 @@ import { Recorder } from '@/components/Recorder'
 import { SlideDropZone } from '@/components/SlideDropZone'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useTheme } from '@/hooks/use-theme'
+import { ApiError, sendSession } from '@/lib/api'
 import { countWords } from '@/lib/format'
 import { stagger } from '@/lib/motion'
-import type { Recording, SlideFile } from '@/types'
+import type { Recording, SendState, SlideFile } from '@/types'
 
 export default function App() {
   const { theme, chooseTheme } = useTheme()
   const [notes, setNotes] = useState('')
   const [recording, setRecording] = useState<Recording | null>(null)
   const [slides, setSlides] = useState<SlideFile[]>([])
+  const [sendState, setSendState] = useState<SendState>({ status: 'idle' })
+
+  async function handleGenerate() {
+    if (!notes.trim() && slides.length === 0) {
+      setSendState({ status: 'error', message: 'Sending recordings is coming soon. Add notes or slides for now.' })
+      return
+    }
+    setSendState({ status: 'sending' })
+    try {
+      const receipt = await sendSession(notes, slides)
+      setSendState({ status: 'received', receipt })
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : 'Something went wrong. Please try again.'
+      setSendState({ status: 'error', message })
+    }
+  }
 
   return (
     <MotionConfig reducedMotion="user">
@@ -46,7 +63,14 @@ export default function App() {
             </motion.div>
           </div>
 
-          <GenerateBar notesWords={countWords(notes)} recording={recording} slideCount={slides.length} />
+          <GenerateBar
+            notesWords={countWords(notes)}
+            recording={recording}
+            slideCount={slides.length}
+            sendState={sendState}
+            onGenerate={handleGenerate}
+            onDismiss={() => setSendState({ status: 'idle' })}
+          />
 
           <p className="pb-2 text-center text-xs text-muted-foreground">
             Study packs are AI-generated and can contain mistakes. Check them against trusted sources.
