@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     # Comma-separated list of front-end addresses allowed to call this API.
     allowed_origins: str = 'http://localhost:5173'
-    max_request_mb: int = 130
+    max_request_mb: int = 160
 
     @property
     def origins(self) -> list[str]:

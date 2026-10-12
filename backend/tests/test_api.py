@@ -10,6 +10,13 @@ from app.main import app
 client = TestClient(app)
 
 PDF = b'%PDF-1.7\n%fake but correctly signed\n'
+WEBM = b'\x1a\x45\xdf\xa3' + bytes(40)
+M4A = b'\x00\x00\x00\x20ftypM4A ' + bytes(40)
+WAV = b'RIFF\x24\x00\x00\x00WAVEfmt ' + bytes(40)
+OGG = b'OggS' + bytes(40)
+FLAC = b'fLaC' + bytes(40)
+MP3_TAGGED = b'ID3\x04' + bytes(40)
+MP3_FRAME = b'\xff\xfb\x90\x64' + bytes(40)
 
 
 def office_zip(entry: str) -> bytes:
@@ -19,8 +26,10 @@ def office_zip(entry: str) -> bytes:
     return buffer.getvalue()
 
 
-def post(notes: str = '', files: list[tuple[str, bytes]] | None = None):
+def post(notes: str = '', files: list[tuple[str, bytes]] | None = None, audio: tuple[str, bytes] | None = None):
     parts = [('slides', (name, content)) for name, content in files or []]
+    if audio:
+        parts.append(('audio', audio))
     return client.post('/api/sessions', data={'notes': notes}, files=parts or None)
 
 
@@ -31,7 +40,12 @@ def test_health():
 
 
 def test_limits():
-    assert client.get('/api/limits').json() == {'max_slide_files': 5, 'max_slide_mb': 25, 'max_notes_chars': 20_000}
+    assert client.get('/api/limits').json() == {
+        'max_slide_files': 5,
+        'max_slide_mb': 25,
+        'max_audio_mb': 25,
+        'max_notes_chars': 20_000,
+    }
 
 
 def test_receipt_for_notes_and_slides():
@@ -44,7 +58,36 @@ def test_receipt_for_notes_and_slides():
             {'name': 'a.pdf', 'kind': 'pdf', 'size_bytes': len(PDF)},
             {'name': 'b.pptx', 'kind': 'pptx', 'size_bytes': len(pptx)},
         ],
+        'audio': None,
     }
+
+
+def test_audio_formats_from_browsers_are_accepted():
+    for name, content, kind in [
+        ('rec.webm', WEBM, 'webm'),
+        ('rec.m4a', M4A, 'mp4'),
+        ('memo.wav', WAV, 'wav'),
+        ('rec.ogg', OGG, 'ogg'),
+        ('memo.flac', FLAC, 'flac'),
+        ('tagged.mp3', MP3_TAGGED, 'mp3'),
+        ('bare.mp3', MP3_FRAME, 'mp3'),
+    ]:
+        response = post(audio=(name, content))
+        assert response.status_code == 200
+        assert response.json()['audio'] == {'name': name, 'kind': kind, 'size_bytes': len(content)}
+
+
+def test_audio_only_is_enough():
+    assert post(audio=('rec.webm', WEBM)).json()['notes_words'] == 0
+
+
+def test_renamed_audio_is_rejected():
+    assert post(audio=('rec.webm', PDF)).status_code == 415
+
+
+def test_audio_over_25_mb():
+    big = WEBM + bytes(25 * 1024 * 1024)
+    assert post(audio=('long.webm', big)).status_code == 413
 
 
 def test_nothing_to_send():

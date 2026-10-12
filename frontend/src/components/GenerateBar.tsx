@@ -9,37 +9,54 @@ import type { Recording, SendState, SessionReceipt } from '@/types'
 type GenerateBarProps = {
   notesWords: number
   recording: Recording | null
+  recordingLive: boolean
   slideCount: number
   sendState: SendState
   onGenerate: () => void
   onDismiss: () => void
 }
 
-function describeReceipt({ notes_words, slides }: SessionReceipt, hasRecording: boolean) {
+const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`
+
+function describeReceipt({ notes_words, slides, audio }: SessionReceipt) {
   const parts = []
-  if (notes_words > 0) parts.push(`${notes_words} ${notes_words === 1 ? 'word' : 'words'} of notes`)
+  if (notes_words > 0) parts.push(`${plural(notes_words, 'word')} of notes`)
+  if (audio) parts.push(`a recording (${formatFileSize(audio.size_bytes)})`)
   if (slides.length > 0) {
     const bytes = slides.reduce((total, slide) => total + slide.size_bytes, 0)
-    parts.push(`${slides.length} slide ${slides.length === 1 ? 'file' : 'files'} (${formatFileSize(bytes)})`)
+    parts.push(`${plural(slides.length, 'slide file')} (${formatFileSize(bytes)})`)
   }
-  const recordingNote = hasRecording ? ' Recordings are not sent yet.' : ''
-  return `Lucy's server received ${parts.join(' and ')}.${recordingNote} Study pack generation is coming soon.`
+  const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]
+  return `Lucy's server received ${list}. Study pack generation is coming soon.`
 }
 
-export function GenerateBar({ notesWords, recording, slideCount, sendState, onGenerate, onDismiss }: GenerateBarProps) {
+export function GenerateBar({
+  notesWords,
+  recording,
+  recordingLive,
+  slideCount,
+  sendState,
+  onGenerate,
+  onDismiss,
+}: GenerateBarProps) {
   const sending = sendState.status === 'sending'
 
   const chips = [
-    notesWords > 0 && { key: 'notes', icon: NotebookPen, label: `${notesWords} words of notes` },
-    recording && { key: 'audio', icon: Mic, label: `${formatDuration(recording.durationSec)} recording` },
-    slideCount > 0 && { key: 'slides', icon: Presentation, label: `${slideCount} slide ${slideCount === 1 ? 'file' : 'files'}` },
+    notesWords > 0 && { key: 'notes', icon: NotebookPen, label: `${plural(notesWords, 'word')} of notes` },
+    recording && {
+      key: 'audio',
+      icon: Mic,
+      label: recording.durationSec !== null ? `${formatDuration(recording.durationSec)} recording` : 'Audio file',
+    },
+    recordingLive && { key: 'live', icon: Mic, label: 'Recording in progress: stop it to send' },
+    slideCount > 0 && { key: 'slides', icon: Presentation, label: plural(slideCount, 'slide file') },
   ].filter((chip) => chip !== false && chip !== null)
 
-  const enabled = chips.length > 0 && !sending
+  const enabled = chips.length > 0 && !sending && !recordingLive
 
   const message =
     sendState.status === 'received'
-      ? describeReceipt(sendState.receipt, recording !== null)
+      ? describeReceipt(sendState.receipt)
       : sendState.status === 'error'
         ? sendState.message
         : null

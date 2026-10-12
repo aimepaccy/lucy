@@ -30,6 +30,9 @@ uploads/
 *.pptx
 *.pdf
 
+# Claude Code personal settings (can contain local paths)
+.claude/settings.local.json
+
 # OS / editor
 Thumbs.db
 .DS_Store

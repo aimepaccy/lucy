@@ -1,4 +1,4 @@
-import type { SessionReceipt, SlideFile } from '@/types'
+import type { Recording, SessionReceipt, SlideFile } from '@/types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 // Long enough for a full set of slides on slow Wi-Fi.
@@ -6,12 +6,17 @@ const TIMEOUT_MS = 5 * 60_000
 
 export class ApiError extends Error {}
 
-export async function sendSession(notes: string, slides: SlideFile[]): Promise<SessionReceipt> {
+export async function sendSession(
+  notes: string,
+  slides: SlideFile[],
+  recording: Recording | null,
+): Promise<SessionReceipt> {
   // FormData becomes a multipart request. The browser sets the Content-Type header,
   // including the boundary that separates the parts, so we must not set it ourselves.
   const body = new FormData()
   body.append('notes', notes)
   for (const slide of slides) body.append('slides', slide.file)
+  if (recording) body.append('audio', recording.file, recording.name)
 
   let response: Response
   try {

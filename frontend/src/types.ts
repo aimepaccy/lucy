@@ -5,13 +5,18 @@ export type SlideFile = {
 }
 
 export type Recording = {
-  durationSec: number
+  file: Blob
+  name: string
+  // Unknown when an uploaded file does not say how long it is.
+  durationSec: number | null
+  source: 'recorded' | 'uploaded'
 }
 
 // Mirrors SessionReceipt in backend/app/schemas.py.
 export type SessionReceipt = {
   notes_words: number
   slides: { name: string; kind: SlideFile['kind']; size_bytes: number }[]
+  audio: { name: string; kind: string; size_bytes: number } | null
 }
 
 export type SendState =

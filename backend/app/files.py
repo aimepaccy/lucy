@@ -3,14 +3,40 @@ from pathlib import PurePath
 
 from fastapi import UploadFile
 
-from app.schemas import SlideKind
+from app.schemas import AudioKind, SlideKind
 
 MAX_SLIDE_FILES = 5
 MAX_SLIDE_MB = 25
 MAX_SLIDE_BYTES = MAX_SLIDE_MB * 1024 * 1024
 
+# 25 MB is the long-standing direct-upload limit for Whisper; Groq lists larger limits only for paid plans.
+MAX_AUDIO_MB = 25
+MAX_AUDIO_BYTES = MAX_AUDIO_MB * 1024 * 1024
+
 PDF_SIGNATURE = b'%PDF-'
 ZIP_SIGNATURE = b'PK\x03\x04'
+
+
+def detect_audio_kind(upload: UploadFile) -> AudioKind | None:
+    """Identify the audio container by its opening bytes. All of these are formats Whisper accepts."""
+    upload.file.seek(0)
+    start = upload.file.read(12)
+    upload.file.seek(0)
+
+    if start.startswith(b'\x1a\x45\xdf\xa3'):
+        return 'webm'
+    if start.startswith(b'OggS'):
+        return 'ogg'
+    if start[4:8] == b'ftyp':
+        return 'mp4'
+    if start.startswith(b'RIFF') and start[8:12] == b'WAVE':
+        return 'wav'
+    if start.startswith(b'fLaC'):
+        return 'flac'
+    # MP3: either a tag block first, or straight into an audio frame (11 bits set).
+    if start.startswith(b'ID3') or (len(start) > 1 and start[0] == 0xFF and start[1] & 0xE0 == 0xE0):
+        return 'mp3'
+    return None
 
 
 def detect_slide_kind(upload: UploadFile) -> SlideKind | None:
