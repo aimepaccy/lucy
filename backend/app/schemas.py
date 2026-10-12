@@ -28,6 +28,34 @@ class SessionReceipt(BaseModel):
     audio: AudioReceipt | None
 
 
+class SlideText(BaseModel):
+    name: str
+    kind: SlideKind
+    pages: int
+    text: str
+
+
+class Materials(BaseModel):
+    transcript: str | None
+    slides: list[SlideText]
+    warnings: list[str]
+
+
+JobStatus = Literal['queued', 'working', 'done', 'failed']
+
+
+class JobCreated(BaseModel):
+    job_id: str
+    receipt: SessionReceipt
+
+
+class JobState(BaseModel):
+    status: JobStatus
+    step: str
+    materials: Materials | None = None
+    error: str | None = None
+
+
 class Limits(BaseModel):
     max_slide_files: int
     max_slide_mb: int

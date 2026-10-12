@@ -1,7 +1,11 @@
+import shutil
+from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
+from fastapi import Path as PathParam
 
+from app import jobs
 from app.files import (
     MAX_AUDIO_BYTES,
     MAX_AUDIO_MB,
@@ -12,7 +16,7 @@ from app.files import (
     detect_slide_kind,
     display_name,
 )
-from app.schemas import AudioReceipt, Health, Limits, SessionReceipt, SlideReceipt
+from app.schemas import AudioReceipt, Health, JobCreated, JobState, Limits, SessionReceipt, SlideReceipt
 
 # Same limit as the notes editor in the front end (NotesEditor.tsx).
 MAX_NOTES_CHARS = 20_000
@@ -35,12 +39,13 @@ def limits() -> Limits:
     )
 
 
-@router.post('/sessions')
+@router.post('/sessions', status_code=202)
 def receive_session(
+    background: BackgroundTasks,
     notes: Annotated[str, Form(max_length=MAX_NOTES_CHARS)] = '',
     slides: Annotated[list[UploadFile] | None, File()] = None,
     audio: Annotated[UploadFile | None, File()] = None,
-) -> SessionReceipt:
+) -> JobCreated:
     slides = slides or []
 
     if not notes.strip() and not slides and audio is None:
@@ -70,5 +75,36 @@ def receive_session(
             raise HTTPException(status_code=415, detail=f'{name} is not an audio format Lucy can read.')
         audio_receipt = AudioReceipt(name=name, kind=kind, size_bytes=size)
 
-    # Nothing is kept: FastAPI closes the uploads after the response, which deletes their temporary files.
-    return SessionReceipt(notes_words=len(notes.split()), slides=slide_receipts, audio=audio_receipt)
+    # FastAPI deletes the uploads when this request ends, so the job gets its own copies,
+    # under generic names, in a private folder that the job deletes when it finishes.
+    folder = jobs.new_folder()
+    try:
+        work = jobs.JobInput(folder=folder, slides=[])
+        for number, (upload, receipt) in enumerate(zip(slides, slide_receipts)):
+            path = _save(upload, folder / f'slide-{number}.{receipt.kind}')
+            work.slides.append(jobs.SlideInput(path=path, name=receipt.name, kind=receipt.kind))
+        if audio is not None and audio_receipt is not None:
+            work.audio = _save(audio, folder / f'audio.{audio_receipt.kind}')
+            work.audio_kind = audio_receipt.kind
+        job_id = jobs.create()
+        background.add_task(jobs.run, job_id, work)
+    except Exception:
+        shutil.rmtree(folder, ignore_errors=True)
+        raise
+    receipt = SessionReceipt(notes_words=len(notes.split()), slides=slide_receipts, audio=audio_receipt)
+    return JobCreated(job_id=job_id, receipt=receipt)
+
+
+@router.get('/jobs/{job_id}')
+def job_state(job_id: Annotated[str, PathParam(pattern='^[0-9a-f]{32}$')]) -> JobState:
+    state = jobs.get(job_id)
+    if state is None:
+        raise HTTPException(status_code=404, detail='This job has finished and its results were cleared, or it never existed.')
+    return state
+
+
+def _save(upload: UploadFile, destination: Path) -> Path:
+    upload.file.seek(0)
+    with destination.open('wb') as out:
+        shutil.copyfileobj(upload.file, out)
+    return destination

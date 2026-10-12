@@ -1,16 +1,17 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { MotionConfig, motion } from 'motion/react'
 import { Background } from '@/components/Background'
 import { GenerateBar } from '@/components/GenerateBar'
 import { Header } from '@/components/Header'
 import { Hero } from '@/components/Hero'
+import { MaterialsPanel } from '@/components/MaterialsPanel'
 import { NotesEditor } from '@/components/NotesEditor'
 import { PrivacyNotice } from '@/components/PrivacyNotice'
 import { Recorder } from '@/components/Recorder'
 import { SlideDropZone } from '@/components/SlideDropZone'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useTheme } from '@/hooks/use-theme'
-import { ApiError, sendSession } from '@/lib/api'
+import { ApiError, sendSession, waitForJob } from '@/lib/api'
 import { countWords } from '@/lib/format'
 import { stagger } from '@/lib/motion'
 import type { Recording, SendState, SlideFile } from '@/types'
@@ -22,12 +23,21 @@ export default function App() {
   const [recordingLive, setRecordingLive] = useState(false)
   const [slides, setSlides] = useState<SlideFile[]>([])
   const [sendState, setSendState] = useState<SendState>({ status: 'idle' })
+  const generateRef = useRef<HTMLButtonElement>(null)
+
+  // The panel's close button disappears with it, so keyboard focus moves to a sensible place.
+  function closeMaterials() {
+    setSendState({ status: 'idle' })
+    generateRef.current?.focus()
+  }
 
   async function handleGenerate() {
     setSendState({ status: 'sending' })
     try {
-      const receipt = await sendSession(notes, slides, recording)
-      setSendState({ status: 'received', receipt })
+      const { job_id, receipt } = await sendSession(notes, slides, recording)
+      setSendState({ status: 'working', step: 'Waiting to start', receipt })
+      const materials = await waitForJob(job_id, (step) => setSendState({ status: 'working', step, receipt }))
+      setSendState({ status: 'ready', materials })
     } catch (error) {
       const message = error instanceof ApiError ? error.message : 'Something went wrong. Please try again.'
       setSendState({ status: 'error', message })
@@ -60,7 +70,12 @@ export default function App() {
             </motion.div>
           </div>
 
+          {sendState.status === 'ready' && (
+            <MaterialsPanel materials={sendState.materials} onClose={closeMaterials} />
+          )}
+
           <GenerateBar
+            generateRef={generateRef}
             notesWords={countWords(notes)}
             recording={recording}
             recordingLive={recordingLive}

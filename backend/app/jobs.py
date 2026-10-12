@@ -1,0 +1,148 @@
+"""Background jobs: answer at once with a job number, do the slow work afterwards.
+
+Jobs and their results live only in this server's memory, and only until the browser
+collects them (or 15 minutes, if it never does).
+"""
+
+import logging
+import secrets
+import shutil
+import tempfile
+import threading
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+
+from app import extract, providers
+from app.schemas import AudioKind, JobState, Materials, SlideKind, SlideText
+
+RESULT_TTL_SECONDS = 15 * 60
+# Every job's uploads live under this one folder, so leftovers can be found and removed.
+JOBS_ROOT = Path(tempfile.gettempdir()) / 'lucy-jobs'
+
+log = logging.getLogger('lucy.jobs')
+
+
+@dataclass
+class SlideInput:
+    path: Path
+    name: str
+    kind: SlideKind
+
+
+@dataclass
+class JobInput:
+    folder: Path
+    slides: list[SlideInput]
+    audio: Path | None = None
+    audio_kind: AudioKind | None = None
+
+
+@dataclass
+class Job:
+    state: JobState
+    created: float = field(default_factory=time.monotonic)
+
+
+_jobs: dict[str, Job] = {}
+# Jobs run on worker threads, so reads and writes to the shared dictionary take turns.
+_lock = threading.Lock()
+
+
+def new_folder() -> Path:
+    JOBS_ROOT.mkdir(exist_ok=True)
+    return Path(tempfile.mkdtemp(dir=JOBS_ROOT))
+
+
+def sweep_folders(older_than_seconds: float = 0) -> None:
+    """Delete job folders left behind, for example by a crash or a restart in the middle of a job."""
+    if not JOBS_ROOT.exists():
+        return
+    cutoff = time.time() - older_than_seconds
+    for folder in JOBS_ROOT.iterdir():
+        if folder.stat().st_mtime <= cutoff:
+            shutil.rmtree(folder, ignore_errors=True)
+
+
+def create() -> str:
+    _forget_old()
+    job_id = secrets.token_hex(16)
+    with _lock:
+        _jobs[job_id] = Job(JobState(status='queued', step='Waiting to start'))
+    return job_id
+
+
+def get(job_id: str) -> JobState | None:
+    _forget_old()
+    with _lock:
+        job = _jobs.get(job_id)
+        if job is None:
+            return None
+        # A finished job is handed over once and then forgotten.
+        if job.state.status in ('done', 'failed'):
+            del _jobs[job_id]
+        return job.state.model_copy()
+
+
+def _update(job_id: str, **changes) -> None:
+    with _lock:
+        job = _jobs.get(job_id)
+        if job:
+            job.state = job.state.model_copy(update=changes)
+
+
+def _forget_old() -> None:
+    cutoff = time.monotonic() - RESULT_TTL_SECONDS
+    with _lock:
+        for job_id in [job_id for job_id, job in _jobs.items() if job.created < cutoff]:
+            del _jobs[job_id]
+    sweep_folders(older_than_seconds=RESULT_TTL_SECONDS)
+
+
+def _read_slides(slides: list[SlideInput], warnings: list[str]) -> list[SlideText]:
+    results = []
+    for slide in slides:
+        reader = extract.pdf_text if slide.kind == 'pdf' else extract.pptx_text
+        try:
+            text, pages = reader(slide.path)
+        except extract.UnreadableFile:
+            warnings.append(f'{slide.name} could not be read.')
+            continue
+        if not text:
+            warnings.append(f'{slide.name} has no text Lucy can read. It may contain pictures of slides.')
+        if pages > extract.MAX_PAGES:
+            warnings.append(f'{slide.name} is long, so Lucy read only the first {extract.MAX_PAGES} pages.')
+        results.append(SlideText(name=slide.name, kind=slide.kind, pages=pages, text=text))
+    return results
+
+
+def run(job_id: str, work: JobInput) -> None:
+    started = time.monotonic()
+    try:
+        warnings: list[str] = []
+        slides = []
+        if work.slides:
+            _update(job_id, status='working', step='Reading the slides')
+            slides = _read_slides(work.slides, warnings)
+
+        transcript = None
+        if work.audio is not None and work.audio_kind is not None:
+            _update(job_id, status='working', step='Transcribing the recording')
+            transcript = providers.transcribe(work.audio, work.audio_kind)
+            if not transcript:
+                warnings.append('No speech was heard in the recording.')
+
+        materials = Materials(transcript=transcript, slides=slides, warnings=warnings)
+        _update(job_id, status='done', step='Done', materials=materials)
+    except providers.ProviderError as error:
+        # For the operator: what kind of failure, never the student's material.
+        cause = error.__cause__
+        status = getattr(cause, 'status_code', '-')
+        log.warning('Job %s: provider failed (%s, status %s)', job_id, type(cause).__name__, status)
+        _update(job_id, status='failed', step='Failed', error=str(error))
+    except Exception:
+        log.exception('Job %s failed', job_id)
+        _update(job_id, status='failed', step='Failed', error='Something went wrong while reading your material.')
+    finally:
+        shutil.rmtree(work.folder, ignore_errors=True)
+        log.info('Job %s finished in %.1f s', job_id, time.monotonic() - started)

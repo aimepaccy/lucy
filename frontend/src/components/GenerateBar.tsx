@@ -1,12 +1,14 @@
+import type { Ref } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { AlertCircle, CheckCircle2, Loader2, Mic, NotebookPen, Presentation, Sparkles } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
-import { formatDuration, formatFileSize } from '@/lib/format'
+import { formatDuration, formatFileSize, plural } from '@/lib/format'
 import { rise, spring } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 import type { Recording, SendState, SessionReceipt } from '@/types'
 
 type GenerateBarProps = {
+  generateRef: Ref<HTMLButtonElement>
   notesWords: number
   recording: Recording | null
   recordingLive: boolean
@@ -15,8 +17,6 @@ type GenerateBarProps = {
   onGenerate: () => void
   onDismiss: () => void
 }
-
-const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`
 
 function describeReceipt({ notes_words, slides, audio }: SessionReceipt) {
   const parts = []
@@ -27,10 +27,11 @@ function describeReceipt({ notes_words, slides, audio }: SessionReceipt) {
     parts.push(`${plural(slides.length, 'slide file')} (${formatFileSize(bytes)})`)
   }
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]
-  return `Lucy's server received ${list}. Study pack generation is coming soon.`
+  return `Lucy received ${list}.`
 }
 
 export function GenerateBar({
+  generateRef,
   notesWords,
   recording,
   recordingLive,
@@ -39,7 +40,7 @@ export function GenerateBar({
   onGenerate,
   onDismiss,
 }: GenerateBarProps) {
-  const sending = sendState.status === 'sending'
+  const busy = sendState.status === 'sending' || sendState.status === 'working'
 
   const chips = [
     notesWords > 0 && { key: 'notes', icon: NotebookPen, label: `${plural(notesWords, 'word')} of notes` },
@@ -52,16 +53,21 @@ export function GenerateBar({
     slideCount > 0 && { key: 'slides', icon: Presentation, label: plural(slideCount, 'slide file') },
   ].filter((chip) => chip !== false && chip !== null)
 
-  const enabled = chips.length > 0 && !sending && !recordingLive
+  const enabled = chips.length > 0 && !busy && !recordingLive
+
+  const progress =
+    sendState.status === 'sending' ? 'Uploading to Lucy' : sendState.status === 'working' ? sendState.step : null
 
   const message =
-    sendState.status === 'received'
+    sendState.status === 'working'
       ? describeReceipt(sendState.receipt)
-      : sendState.status === 'error'
-        ? sendState.message
-        : null
+      : sendState.status === 'ready'
+        ? 'Lucy has read your material. Check it above; study pack generation comes next.'
+        : sendState.status === 'error'
+          ? sendState.message
+          : null
 
-  const announcement = sending ? 'Sending to Lucy' : (message ?? '')
+  const announcement = progress ?? message ?? ''
 
   return (
     <motion.div variants={rise} className="sticky bottom-4 z-20">
@@ -102,6 +108,7 @@ export function GenerateBar({
           </div>
 
           <motion.button
+            ref={generateRef}
             type="button"
             disabled={!enabled}
             onClick={onGenerate}
@@ -123,8 +130,8 @@ export function GenerateBar({
                 transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 2.4, ease: 'easeInOut' }}
               />
             )}
-            {sending ? <Loader2 className="motion-safe:animate-spin" /> : <Sparkles />}
-            {sending ? 'Sending to Lucy' : 'Generate study pack'}
+            {busy ? <Loader2 className="motion-safe:animate-spin" /> : <Sparkles />}
+            {progress ?? 'Generate study pack'}
           </motion.button>
         </div>
 
@@ -150,9 +157,11 @@ export function GenerateBar({
                 )}
                 <span>
                   {message}{' '}
-                  <button type="button" onClick={onDismiss} className="font-medium text-primary hover:underline">
-                    Dismiss
-                  </button>
+                  {!busy && (
+                    <button type="button" onClick={onDismiss} className="font-medium text-primary hover:underline">
+                      Dismiss
+                    </button>
+                  )}
                 </span>
               </p>
             </motion.div>

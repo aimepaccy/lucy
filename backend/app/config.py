@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_FILE = Path(__file__).resolve().parent.parent / '.env'
@@ -12,6 +13,22 @@ class Settings(BaseSettings):
     # Comma-separated list of front-end addresses allowed to call this API.
     allowed_origins: str = 'http://localhost:5173'
     max_request_mb: int = 160
+
+    # Any OpenAI-compatible provider. SecretStr keeps the key out of logs and error messages.
+    llm_base_url: str = 'https://api.groq.com/openai/v1'
+    llm_api_key: SecretStr = SecretStr('')
+
+    # Not every provider offers speech-to-text, so transcription can use its own.
+    # Left empty, it uses the same provider as the LLM.
+    transcribe_base_url: str = ''
+    transcribe_api_key: SecretStr = SecretStr('')
+    transcribe_model: str = 'whisper-large-v3-turbo'
+
+    @property
+    def transcription_provider(self) -> tuple[str, str]:
+        base_url = self.transcribe_base_url or self.llm_base_url
+        key = self.transcribe_api_key.get_secret_value() or self.llm_api_key.get_secret_value()
+        return base_url, key
 
     @property
     def origins(self) -> list[str]:

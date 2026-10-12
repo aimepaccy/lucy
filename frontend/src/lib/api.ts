@@ -1,16 +1,37 @@
-import type { Recording, SessionReceipt, SlideFile } from '@/types'
+import type { JobCreated, JobState, Materials, Recording, SlideFile } from '@/types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 // Long enough for a full set of slides on slow Wi-Fi.
-const TIMEOUT_MS = 5 * 60_000
+const UPLOAD_TIMEOUT_MS = 5 * 60_000
+const CHECK_TIMEOUT_MS = 15_000
+const POLL_EVERY_MS = 1500
+const JOB_TIMEOUT_MS = 10 * 60_000
 
-export class ApiError extends Error {}
+export class ApiError extends Error {
+  status: number | null
 
-export async function sendSession(
-  notes: string,
-  slides: SlideFile[],
-  recording: Recording | null,
-): Promise<SessionReceipt> {
+  constructor(message: string, status: number | null = null) {
+    super(message)
+    this.status = status
+  }
+}
+
+async function request<T>(path: string, init: RequestInit, timeoutMs: number): Promise<T> {
+  let response: Response
+  try {
+    response = await fetch(`${API_URL}${path}`, { ...init, signal: AbortSignal.timeout(timeoutMs) })
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'TimeoutError') {
+      throw new ApiError('Lucy took too long to answer. Check your connection, or send fewer or smaller files.')
+    }
+    throw new ApiError('Lucy could not reach its server. Check that it is running, then try again.')
+  }
+
+  if (!response.ok) throw new ApiError(await readError(response), response.status)
+  return response.json()
+}
+
+export function sendSession(notes: string, slides: SlideFile[], recording: Recording | null): Promise<JobCreated> {
   // FormData becomes a multipart request. The browser sets the Content-Type header,
   // including the boundary that separates the parts, so we must not set it ourselves.
   const body = new FormData()
@@ -18,22 +39,30 @@ export async function sendSession(
   for (const slide of slides) body.append('slides', slide.file)
   if (recording) body.append('audio', recording.file, recording.name)
 
-  let response: Response
-  try {
-    response = await fetch(`${API_URL}/api/sessions`, {
-      method: 'POST',
-      body,
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-    })
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new ApiError('Sending took too long. Check your connection, or send fewer or smaller files.')
-    }
-    throw new ApiError('Lucy could not reach its server. Check that it is running, then try again.')
-  }
+  return request<JobCreated>('/api/sessions', { method: 'POST', body }, UPLOAD_TIMEOUT_MS)
+}
 
-  if (!response.ok) throw new ApiError(await readError(response))
-  return response.json()
+const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
+
+// Polling: ask "is it ready yet?" every 1.5 seconds until the job is done, has failed, or takes too long.
+export async function waitForJob(jobId: string, onStep: (step: string) => void): Promise<Materials> {
+  const giveUpAt = Date.now() + JOB_TIMEOUT_MS
+  while (Date.now() < giveUpAt) {
+    let job: JobState
+    try {
+      job = await request<JobState>(`/api/jobs/${jobId}`, {}, CHECK_TIMEOUT_MS)
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
+        throw new ApiError("Lucy's server restarted before it finished. Please send again.")
+      }
+      throw error
+    }
+    if (job.status === 'done' && job.materials) return job.materials
+    if (job.status === 'failed') throw new ApiError(job.error ?? 'Lucy could not read your material.')
+    onStep(job.step)
+    await wait(POLL_EVERY_MS)
+  }
+  throw new ApiError('Lucy is taking longer than expected. Please try again.')
 }
 
 // FastAPI sends errors as { detail: "message" }, or { detail: [...] } for validation errors.

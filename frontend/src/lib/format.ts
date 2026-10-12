@@ -9,6 +9,10 @@ export function formatFileSize(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
 
+export function plural(count: number, word: string) {
+  return `${count} ${word}${count === 1 ? '' : 's'}`
+}
+
 export function countWords(text: string) {
   const trimmed = text.trim()
   return trimmed ? trimmed.split(/\s+/).length : 0

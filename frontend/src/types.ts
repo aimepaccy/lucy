@@ -19,8 +19,28 @@ export type SessionReceipt = {
   audio: { name: string; kind: string; size_bytes: number } | null
 }
 
+// Mirrors JobCreated, Materials and JobState in backend/app/schemas.py.
+export type JobCreated = {
+  job_id: string
+  receipt: SessionReceipt
+}
+
+export type Materials = {
+  transcript: string | null
+  slides: { name: string; kind: SlideFile['kind']; pages: number; text: string }[]
+  warnings: string[]
+}
+
+export type JobState = {
+  status: 'queued' | 'working' | 'done' | 'failed'
+  step: string
+  materials: Materials | null
+  error: string | null
+}
+
 export type SendState =
   | { status: 'idle' }
   | { status: 'sending' }
-  | { status: 'received'; receipt: SessionReceipt }
+  | { status: 'working'; step: string; receipt: SessionReceipt }
+  | { status: 'ready'; materials: Materials }
   | { status: 'error'; message: string }
