@@ -9,18 +9,17 @@ Phase 1 (front-end shell) done on 2026-10-10: input page with notes (with clear 
 
 Phase 2 (back-end skeleton) done on 2026-10-12: FastAPI app with `GET /api/health`, `GET /api/limits` and `POST /api/sessions` (notes plus up to 5 PDF or .pptx files). Files are identified by content, request size is limited as bytes arrive, nothing is kept, CORS allows only the front end. Generate sends to the server and shows a receipt or a clear error. 13 tests pass; checked in a real browser (received, rejected, server down). Quality review and `/security-review` run; all recommended fixes applied.
 
-## Next
-1. Phase 3b: understanding (transcription with Whisper through the OpenAI-compatible provider layer, text from PDF and PPTX, background jobs with polling, a "What Lucy heard and read" panel). Retype candidate: the polling loop.
-2. Carry-overs to their phases:
-   - Phase 3b: send audio to Whisper as bytes; never build a shell command from a filename. Test the PDF check on real slide decks. Run `/security-review` on the new parsing code.
-   - Phase 5: replace the Generate receipt with real states.
-   - Phase 10: the inline theme script in `index.html` needs a hash in the Content Security Policy; test the animated background on a low-end phone or laptop. Deploy installs from `requirements.txt` (runtime only), not the lock file. An early 413 during a large upload may show as "could not reach its server"; test on the hosted version. The microphone needs https on the hosted version. Test recording on Safari or an iPhone (MP4), then decide whether to tighten the MP4 check by brand (skipped in 3a: unverified brands could reject real recordings). Front end could read its limits from `/api/limits` instead of repeating them.
-3. Revisit with Rugimbana: CORS (missed on 2026-10-12); data down, events up (still mixing the directions; memory hook: "down go data and phone numbers, up go phone calls"); race conditions (named, fix is "check the current state before acting").
+Phase 3a (recording) done on 2026-10-12: real microphone recording at 32 kbps (about 14 MB an hour) with pause, resume, cancel, a live level meter and listen-back; audio-file upload; consent reminder by the record button. The microphone switches off on stop, cancel, failure and when the page goes away; a recording is kept if the microphone drops out; Generate is blocked while recording. The server accepts one audio file (25 MB, identified by its opening bytes). Quality review and `/security-review` run; all must-fix and recommended items fixed except the MP4 brand check (see Next).
 
-iew` on the new upload paths.
-   - Phase 5: replace the Generate receipt and the "Preview" badge with real states.
-   - Phase 10: the inline theme script in `index.html` needs a hash in the Content Security Policy; test the animated background on a low-end phone or laptop. Deploy installs from `requirements.txt` (runtime only), not the lock file, which also holds test tools. An early 413 during a large upload may show in the browser as "could not reach its server"; test on the hosted version.
-3. Revisit with Rugimbana: CORS (explain-back question 2 was missed) and data down, events up (check question set on 2026-10-12).
+Phase 3b (understanding) done on 2026-10-12: Generate answers 202 with a job number and the browser polls (tolerating up to two dropped checks). Background jobs read PDF and PowerPoint text (tables, grouped shapes, speaker notes; 300-page and zip-bomb limits; warnings for scanned or unreadable files) and transcribe audio with Whisper through the provider layer (transcription can use its own provider). Uploads are copied under generic names to a private folder deleted when the job ends; leftovers are swept at startup; results are forgotten once collected (15 minutes at most). "What Lucy heard and read" panel, labelled AI-generated; privacy notice updated to match. 32 tests pass with a stand-in for the provider; one live Groq run with a synthetic voice transcribed correctly apart from one drug-instruction word. Quality review and security review run; all findings fixed.
+
+## Next
+1. Phase 4: AI generation (summary, flashcards, quiz from the transcript, notes and slide text). Starts with a preview of tokens, context windows, temperature, structured output and hallucination. First item: make the transcript editable in the panel, so the student corrects it before Lucy writes anything (Rugimbana's idea, 2026-10-12; see plan amendment).
+2. Carry-overs to their phases:
+   - Phase 4: the LLM goes through the same provider layer; the test stand-in pattern applies (no test calls the real provider).
+   - Phase 5: replace the Generate receipt with real states; compare polling with streaming.
+   - Phase 10: the inline theme script in `index.html` needs a hash in the Content Security Policy; test the animated background on a low-end phone or laptop. Deploy installs from `requirements.txt` (runtime only). An early 413 during a large upload may show as "could not reach its server". The microphone needs https. Test recording on Safari or an iPhone, then decide on the MP4 brand check. Front end could read its limits from `/api/limits`. Jobs live in one process's memory: run a single worker, or move jobs to shared storage; cap concurrent jobs; uvicorn access logs record job ids. Add a time limit for parsing hostile PDFs. Windows `--reload` sometimes fails to restart the server: restart by hand if the API looks out of date.
+3. Revisit with Rugimbana: CORS (still pending); data down, events up (memory hook: "down go data and phone numbers, up go phone calls"); test stand-ins (explain-back question 3 missed on 2026-10-12).
 
 ## Blockers
 None.
@@ -51,3 +50,6 @@ None.
 - 2026-10-12: Phase 3 split into 3a (recording, mostly browser) and 3b (transcription, slide text, background jobs), so each walkthrough stays digestible.
 - 2026-10-12: Recording at 32 kbps, capped at 90 minutes or about 24 MB, whichever comes first. Request limit raised to 160 MB (five 25 MB slide files, 25 MB of audio, notes).
 - 2026-10-12: Claude Code hook adopted: after a back-end Python edit, the back-end tests run automatically (`.claude/settings.json`). `.claude/settings.local.json` is git-ignored because it can contain local paths.
+- 2026-10-12: Background jobs with polling (202 Accepted + `GET /api/jobs/{id}`), jobs kept in memory, results handed over once. Simple and enough for one-on-one demos; shared storage only if Lucy ever runs on several servers.
+- 2026-10-12: Transcription can use its own OpenAI-compatible provider (`TRANSCRIBE_BASE_URL`, `TRANSCRIBE_API_KEY`), defaulting to the LLM provider, because not every provider offers speech-to-text.
+- 2026-10-12: Editable transcript before generation (Rugimbana's idea): AI transcription makes mistakes (live test: "nebulasts" for "nebulised"), so the student corrects it and the AI works from the corrected version. Scheduled as the first item of phase 4.

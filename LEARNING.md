@@ -92,3 +92,20 @@ Dated entries. For each session: concepts met, what clicked, mistakes worth reme
 - AI-tool feature: **hooks** (a standing order for Claude Code). After any back-end Python edit, the tests run automatically; silent on success, reported on failure. Proven to fire. Verdict: adopt. Review with `/hooks`.
 - The Quality reviewer found two real microphone bugs (both race conditions) that the browser tests had missed; tests only check the paths you think of.
 
+## 2026-10-12: Phase 3b, understanding
+- **202 Accepted and background jobs:** the server answers at once with a job number ("received, still working") and does the slow work afterwards, like a lab specimen number.
+- **Polling:** the browser asks "is it ready yet?" every 1.5 seconds. The alternative, being told when it is ready (streaming or push), comes in phase 5.
+- **Threads and locks:** jobs run on several worker threads sharing one list of jobs; a lock makes them take turns, like nurses sharing one pen for one chart.
+- **Provider layer and SDK:** one door to outside AI, using the `openai` library pointed at any OpenAI-compatible provider from `.env`. Transcription can use its own provider. `SecretStr` hides the key from logs.
+- **Translating errors:** technical failures become plain words for the student; the technical cause is logged for the operator, never the student's content.
+- **Text extraction:** pypdf and python-pptx, including tables, grouped shapes and speaker notes. Scanned PDFs have pictures of words, not text, so Lucy warns. Limits on pages and unpacked size because files come from strangers. python-pptx reads XML with entities switched off (no XXE).
+- **Data minimisation:** keep the least for the shortest time. Files deleted when the job ends, leftovers swept at startup, results forgotten once collected. The privacy notice must match what the code does.
+- **Test stand-ins (fakes, mocks):** a fake transcription function returns a fixed sentence, like a simulated patient in an OSCE. Real calls in tests are slow, unreliable, use the free quota and send data out; the first test run did reach Groq by mistake, which the hook's slow run exposed.
+- **AI errors are real:** the first live transcript turned "nebulised" into "nebulasts" in a drug instruction.
+- Explain-back answers:
+  1. 202 vs 200: right.
+  2. Copying uploads: half right. FastAPI deletes the uploads when the request ends, which is before the job even starts; the job needs its own copy to work on afterwards, and deletes that copy when it finishes.
+  3. Test stand-ins: not answered (tired). Answer recorded above. **Revisit.** Raised instead a good product point: the student should be able to edit the transcript before the AI uses it (human in the loop). Adopted as the first item of phase 4.
+- Retype: done by Claude at Rugimbana's request (tired): polling now tolerates up to two dropped checks in a row; tested by cutting the connection on purpose (2 dropped: continues; 3 dropped: clear message).
+- AI-tool feature: the hook proved itself (caught the 200 to 202 change at once; its slow run exposed tests calling Groq). Review agents ran in parallel in the background.
+- Process slip (Claude): two progress-file edits silently matched nothing (the phase 3a status line, then the first 3b close). Fixed; edits to these files are now checked after writing.
