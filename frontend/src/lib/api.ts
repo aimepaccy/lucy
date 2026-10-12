@@ -47,15 +47,22 @@ const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve,
 // Polling: ask "is it ready yet?" every 1.5 seconds until the job is done, has failed, or takes too long.
 export async function waitForJob(jobId: string, onStep: (step: string) => void): Promise<Materials> {
   const giveUpAt = Date.now() + JOB_TIMEOUT_MS
+  let failedChecks = 0
   while (Date.now() < giveUpAt) {
     let job: JobState
     try {
       job = await request<JobState>(`/api/jobs/${jobId}`, {}, CHECK_TIMEOUT_MS)
+      failedChecks = 0
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         throw new ApiError("Lucy's server restarted before it finished. Please send again.")
       }
-      throw error
+      // A dropped check (no answer at all) may be a Wi-Fi blip: try again, up to three times in a row.
+      const noAnswer = error instanceof ApiError && error.status === null
+      failedChecks += 1
+      if (!noAnswer || failedChecks === 3) throw error
+      await wait(POLL_EVERY_MS)
+      continue
     }
     if (job.status === 'done' && job.materials) return job.materials
     if (job.status === 'failed') throw new ApiError(job.error ?? 'Lucy could not read your material.')
