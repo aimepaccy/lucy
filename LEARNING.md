@@ -48,3 +48,25 @@ Dated entries. For each session: concepts met, what clicked, mistakes worth reme
   3. Hard-coded dark colours: answered "everything black and a white flash". Correction: the cost is maintenance and consistency; colours scattered across many files, so a palette change or a new theme means editing every component. Tokens change in one place (the formulary principle).
 - AI-tool features: **Playwright** (scripted real-browser checks; caught four UI bugs before Rugimbana saw them; verdict: adopt, becomes end-to-end tests in phase 10). **Quality subagent** run in the background while feedback was written (parallel work).
 - **Going back with git (revert vs reset):** the design upgrade was undone with `git revert --no-edit ef045ee`, which adds a new commit that reverses that one commit and leaves history intact. `git reset` would erase the commit and, since it was already pushed, need a force push that rewrites the public history. On a shared, pushed branch, use revert. One genuine bug fix from the reverted commit (removing the leftover blur filter) was re-applied by hand afterwards.
+
+## 2026-10-11 to 2026-10-12: Phase 2, back-end skeleton
+- **Client and server, HTTP:** the browser (client) sends a request (method, path, headers, body); the server answers with a response (status code, headers, body).
+- **REST:** design an API around resources (nouns like `/api/sessions`) acted on by HTTP methods (verbs: `GET` reads, `POST` sends something new). An **endpoint** is one method plus one path.
+- **Status code families:** 2xx success, 4xx the request was wrong (client's side), 5xx the server failed (our side). Lucy uses 200, 400, 413 (too large), 415 (wrong file type), 422 (well-formed but unusable).
+- **Multipart upload:** one request split into labelled parts (notes, then each file), separated by a boundary the browser chooses. That is why we never set `Content-Type` ourselves with `FormData`.
+- **CORS and the same-origin policy:** a different port counts as a different origin. The browser reads the server's `Access-Control-Allow-Origin` reply before letting a page read the answer. Simple requests go straight through; JSON requests first send a preflight (`OPTIONS`).
+- **Uvicorn, ASGI, FastAPI:** Uvicorn listens on the port, ASGI is the standard hand-over, FastAPI is where the routes live.
+- **Middleware as an onion:** each request passes through layers before reaching the route. In FastAPI the layer added last is the outermost. CORS sits outside the size limit so even a 413 carries CORS headers.
+- **Pydantic:** declare the shape and limits of data; FastAPI rejects anything else with a 422 before our code runs. Same tool will check the AI's JSON in phase 4.
+- **Magic numbers (file signatures):** identify a file by its content (`%PDF-`, `PK` for zip), not its name. A .pptx is a zip; we read its table of contents for `ppt/presentation.xml` without unpacking it (no zip bombs, no zip slip).
+- **Defence in depth:** browser checks for convenience, server checks for safety, and a size limit that counts bytes as they arrive because the client's declared size can lie.
+- **Discriminated union (`SendState`):** each status carries its own data; TypeScript only lets you read `receipt` after checking the status is `'received'`.
+- **Tests:** `pytest` with `TestClient` calls the app in-process. Tests caught a corrupted file in under a second during the build.
+- Warm-up (effect cleanup, revisited from phase 1): right this time. Without cleanup the old interval keeps running, so pause does not pause and each resume adds another timer.
+- Retype: `Limits` model and `GET /api/limits`. Worked first time. Style note: Python (PEP 8) puts two blank lines between top-level functions and classes; fixed in review.
+- Explain-back answers:
+  1. Renamed `virus.exe`: right idea (content is checked, not the name) and right family (4xx). Sharper: the browser check passes it (it only reads the name); the file does reach the server, lands in a temporary file, fails the signature check, is refused with **415**, and is deleted. "Rejected" is not "never uploaded".
+  2. `curl` and CORS: **wrong.** CORS does not stop curl. CORS is a rule the browser enforces to protect its user from malicious websites reading other sites' answers with the user's browser. Tools outside a browser ignore it. The server must protect itself (our checks now, an access code in phase 10). **Revisit.**
+  3. 415 vs 500: right. 415 means the request was wrong; 500 means our code failed on it (a bug for us to fix).
+- Data down, events up: not sticking yet. Re-explained with the ward chart analogy (App holds the one chart; children get read-only copies and call App to change it). **Revisit** with the check question about a word count in the Header.
+- AI-tool feature: **`/security-review`** skill. Found nothing exploitable; it compares committed changes against GitHub, so it had to be pointed at the staged changes. It skips denial-of-service and correctness on purpose, so it complements the Quality reviewer (which found a real 500 bug). Verdict: adopt for phases touching inputs, secrets or access (3, 6, 10).

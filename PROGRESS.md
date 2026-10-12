@@ -1,19 +1,21 @@
 # Progress
 
-Last updated: 2026-10-10
+Last updated: 2026-10-12
 
 ## Status
 Phase 0 (setup) done. Groq key checked and valid; `backend/.env` complete.
 
-Phase 1 (front-end shell) done on 2026-10-10: input page with notes (with clear and undo), a simulated recorder, a slide drop zone, a sticky Generate bar, light and dark themes, and subtle motion. Quality review run; all must-fix and recommended items fixed. Explain-back done (feedback in `LEARNING.md`).
+Phase 1 (front-end shell) done on 2026-10-10: input page with notes (with clear and undo), a simulated recorder, a slide drop zone, a sticky Generate bar, light and dark themes, and subtle motion.
+
+Phase 2 (back-end skeleton) done on 2026-10-12: FastAPI app with `GET /api/health`, `GET /api/limits` and `POST /api/sessions` (notes plus up to 5 PDF or .pptx files). Files are identified by content, request size is limited as bytes arrive, nothing is kept, CORS allows only the front end. Generate sends to the server and shows a receipt or a clear error. 13 tests pass; checked in a real browser (received, rejected, server down). Quality review and `/security-review` run; all recommended fixes applied.
 
 ## Next
-1. Phase 2: back-end skeleton (FastAPI, an upload route, the front end talking to the back end). Starts with a preview of REST, HTTP, CORS and Pydantic.
+1. Phase 3: ingestion (in-app recording and audio upload, transcription with Whisper, text from PDF and PPTX). Starts with a preview of MediaRecorder, audio formats, MIME types and background jobs.
 2. Carry-overs to their phases:
-   - Phase 3: add audio-file upload to the Recorder panel (v1 input in `docs/plan.md`); the microphone needs a secure context (HTTPS or localhost); turn the microphone off in effect cleanup.
-   - Phase 5: replace the Generate notice and the "Preview" badge with real states.
-   - Phase 10: the inline theme script in `index.html` needs a hash in the Content Security Policy; test the animated background on a low-end phone or laptop.
-3. Revisit with Rugimbana: effect cleanup (explain-back question 2 was missed).
+   - Phase 3: add audio-file upload to the Recorder panel; the microphone needs a secure context (HTTPS or localhost); turn the microphone off in effect cleanup. Audio raises the size question again: check the provider's audio file limit and revisit `MAX_REQUEST_MB`. Test the PDF check on real slide decks. Run `/security-review` on the new upload paths.
+   - Phase 5: replace the Generate receipt and the "Preview" badge with real states.
+   - Phase 10: the inline theme script in `index.html` needs a hash in the Content Security Policy; test the animated background on a low-end phone or laptop. Deploy installs from `requirements.txt` (runtime only), not the lock file, which also holds test tools. An early 413 during a large upload may show in the browser as "could not reach its server"; test on the hosted version.
+3. Revisit with Rugimbana: CORS (explain-back question 2 was missed) and data down, events up (check question set on 2026-10-12).
 
 ## Blockers
 None.
@@ -35,3 +37,8 @@ None.
 - 2026-10-10: Inter font, served from our own files (no Google Fonts request).
 - 2026-10-10: Playwright adopted for checking the UI in a real browser (Edge); it becomes the end-to-end test tool in phase 10.
 - 2026-10-10: No license file yet (all rights reserved by default). Revisit before sharing widely.
+- 2026-10-11: Front end calls the back end directly with CORS, not through a Vite proxy, so CORS is met in development rather than as a surprise at deploy.
+- 2026-10-11: Audio is sent from phase 3; phase 2 sends notes and slides only, and the receipt says recordings are not sent yet.
+- 2026-10-11: Uploads are identified by content (file signature, and `ppt/presentation.xml` inside the zip), never by name. Limits: 5 files, 25 MB each, 130 MB per request, 20,000 characters of notes (same as the editor).
+- 2026-10-11: `/security-review` adopted for phases that touch inputs, secrets or access (3, 6, 10).
+- 2026-10-12: Teaching style: beginner-friendly ("for dummies"): everyday words and an analogy first, then the term, then the code. Recorded in `_hub/PROFILE.md`.

@@ -30,6 +30,10 @@ def test_health():
     assert response.json() == {'status': 'ok'}
 
 
+def test_limits():
+    assert client.get('/api/limits').json() == {'max_slide_files': 5, 'max_slide_mb': 25, 'max_notes_chars': 20_000}
+
+
 def test_receipt_for_notes_and_slides():
     pptx = office_zip('ppt/presentation.xml')
     response = post('Asthma: wheeze, cough and chest tightness', [('a.pdf', PDF), ('b.pptx', pptx)])

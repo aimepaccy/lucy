@@ -18,3 +18,9 @@ class SlideReceipt(BaseModel):
 class SessionReceipt(BaseModel):
     notes_words: int
     slides: list[SlideReceipt]
+
+
+class Limits(BaseModel):
+    max_slide_files: int
+    max_slide_mb: int
+    max_notes_chars: int

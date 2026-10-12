@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.files import MAX_SLIDE_BYTES, MAX_SLIDE_FILES, MAX_SLIDE_MB, detect_slide_kind, display_name
-from app.schemas import Health, SessionReceipt, SlideReceipt
+from app.schemas import Health, Limits, SessionReceipt, SlideReceipt
 
 # Same limit as the notes editor in the front end (NotesEditor.tsx).
 MAX_NOTES_CHARS = 20_000
@@ -14,6 +14,11 @@ router = APIRouter(prefix='/api')
 @router.get('/health')
 def health() -> Health:
     return Health(status='ok')
+
+
+@router.get('/limits')
+def limits() -> Limits:
+    return Limits(max_slide_files=MAX_SLIDE_FILES, max_slide_mb=MAX_SLIDE_MB, max_notes_chars=MAX_NOTES_CHARS)
 
 
 @router.post('/sessions')
