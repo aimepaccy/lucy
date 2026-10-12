@@ -10,9 +10,14 @@ Phase 1 (front-end shell) done on 2026-10-10: input page with notes (with clear 
 Phase 2 (back-end skeleton) done on 2026-10-12: FastAPI app with `GET /api/health`, `GET /api/limits` and `POST /api/sessions` (notes plus up to 5 PDF or .pptx files). Files are identified by content, request size is limited as bytes arrive, nothing is kept, CORS allows only the front end. Generate sends to the server and shows a receipt or a clear error. 13 tests pass; checked in a real browser (received, rejected, server down). Quality review and `/security-review` run; all recommended fixes applied.
 
 ## Next
-1. Phase 3: ingestion (in-app recording and audio upload, transcription with Whisper, text from PDF and PPTX). Starts with a preview of MediaRecorder, audio formats, MIME types and background jobs.
+1. Phase 3b: understanding (transcription with Whisper through the OpenAI-compatible provider layer, text from PDF and PPTX, background jobs with polling, a "What Lucy heard and read" panel). Retype candidate: the polling loop.
 2. Carry-overs to their phases:
-   - Phase 3: add audio-file upload to the Recorder panel; the microphone needs a secure context (HTTPS or localhost); turn the microphone off in effect cleanup. Audio raises the size question again: check the provider's audio file limit and revisit `MAX_REQUEST_MB`. Test the PDF check on real slide decks. Run `/security-review` on the new upload paths.
+   - Phase 3b: send audio to Whisper as bytes; never build a shell command from a filename. Test the PDF check on real slide decks. Run `/security-review` on the new parsing code.
+   - Phase 5: replace the Generate receipt with real states.
+   - Phase 10: the inline theme script in `index.html` needs a hash in the Content Security Policy; test the animated background on a low-end phone or laptop. Deploy installs from `requirements.txt` (runtime only), not the lock file. An early 413 during a large upload may show as "could not reach its server"; test on the hosted version. The microphone needs https on the hosted version. Test recording on Safari or an iPhone (MP4), then decide whether to tighten the MP4 check by brand (skipped in 3a: unverified brands could reject real recordings). Front end could read its limits from `/api/limits` instead of repeating them.
+3. Revisit with Rugimbana: CORS (missed on 2026-10-12); data down, events up (still mixing the directions; memory hook: "down go data and phone numbers, up go phone calls"); race conditions (named, fix is "check the current state before acting").
+
+iew` on the new upload paths.
    - Phase 5: replace the Generate receipt and the "Preview" badge with real states.
    - Phase 10: the inline theme script in `index.html` needs a hash in the Content Security Policy; test the animated background on a low-end phone or laptop. Deploy installs from `requirements.txt` (runtime only), not the lock file, which also holds test tools. An early 413 during a large upload may show in the browser as "could not reach its server"; test on the hosted version.
 3. Revisit with Rugimbana: CORS (explain-back question 2 was missed) and data down, events up (check question set on 2026-10-12).
@@ -42,3 +47,7 @@ None.
 - 2026-10-11: Uploads are identified by content (file signature, and `ppt/presentation.xml` inside the zip), never by name. Limits: 5 files, 25 MB each, 130 MB per request, 20,000 characters of notes (same as the editor).
 - 2026-10-11: `/security-review` adopted for phases that touch inputs, secrets or access (3, 6, 10).
 - 2026-10-12: Teaching style: beginner-friendly ("for dummies"): everyday words and an analogy first, then the term, then the code. Recorded in `_hub/PROFILE.md`.
+- 2026-10-12: Groq free-tier limits for `whisper-large-v3-turbo` (from Rugimbana's console): 20 requests a minute, 2,000 a day, 7,200 audio seconds an hour, 28,800 a day. File size limit not published for the free tier, so audio is capped at 25 MB.
+- 2026-10-12: Phase 3 split into 3a (recording, mostly browser) and 3b (transcription, slide text, background jobs), so each walkthrough stays digestible.
+- 2026-10-12: Recording at 32 kbps, capped at 90 minutes or about 24 MB, whichever comes first. Request limit raised to 160 MB (five 25 MB slide files, 25 MB of audio, notes).
+- 2026-10-12: Claude Code hook adopted: after a back-end Python edit, the back-end tests run automatically (`.claude/settings.json`). `.claude/settings.local.json` is git-ignored because it can contain local paths.

@@ -70,3 +70,25 @@ Dated entries. For each session: concepts met, what clicked, mistakes worth reme
   3. 415 vs 500: right. 415 means the request was wrong; 500 means our code failed on it (a bug for us to fix).
 - Data down, events up: not sticking yet. Re-explained with the ward chart analogy (App holds the one chart; children get read-only copies and call App to change it). **Revisit** with the check question about a word count in the Header.
 - AI-tool feature: **`/security-review`** skill. Found nothing exploitable; it compares committed changes against GitHub, so it had to be pointed at the staged changes. It skips denial-of-service and correctness on purpose, so it complements the Quality reviewer (which found a real 500 bug). Verdict: adopt for phases touching inputs, secrets or access (3, 6, 10).
+
+## 2026-10-12: Phase 3a, recording
+- **Microphone permission and secure context:** the browser asks the user, not the website, and only on https or localhost pages.
+- **`await` and Promises:** a Promise is an IOU for an answer that comes later (for example, the user clicking Allow). `await` pauses that one function until the answer arrives; the rest of the page keeps running.
+- **Callbacks:** functions handed to the browser to call when something happens (`ondataavailable`, `onstop`).
+- **MediaRecorder and Blobs:** the browser's tape recorder delivers 1-second chunks; Stop glues them into one in-memory file (a Blob).
+- **Container vs codec, bitrate:** envelope (WebM, MP4) vs the language inside (Opus, AAC). 32 kbps keeps speech clear: about 14 MB an hour (measured 18 KB for 5 seconds).
+- **RMS level meter:** centre the samples on silence (128), square, average, square root. With the mean at zero, RMS is the standard deviation of the wave.
+- **Custom hooks:** a `use...` function that bundles state and effects. The engine (`use-audio-recorder.ts`) is separate from the dashboard (`Recorder.tsx`).
+- **State vs refs:** state is the whiteboard (changing it redraws the screen); a ref is a pocket notebook (kept, but no redraw). Live browser objects go in refs.
+- **Object URLs:** a temporary address for an in-memory file, like a cloakroom ticket; revoke it in the cleanup.
+- **Timestamps vs counting ticks:** counting timer ticks loses time around pauses and in background tabs; subtracting timestamps does not.
+- **Race conditions:** two actions overlapping in an order nobody planned (upload during the permission prompt; double-clicking Stop). The fix: check the current state before acting.
+- **Single source of truth, applied:** the Recorder no longer keeps its own "done" flag; the recording lives in `App` and comes down as a prop.
+- Explain-back answers:
+  1. Refs vs state: right (the timer must redraw every second; the stream only needs to be kept).
+  2. Stop to chip: events up right, but described App as "throwing up a function". Correction: App handed `onChange` down at the start; Stop calls it (up); App updates its chart and passes the recording down to GenerateBar, which draws the chip. Memory hook: "down go data and phone numbers, up go phone calls." **Revisit.**
+  3. Race condition: described as acting before permission. Correction: the problem was two actions overlapping (upload finishing while the microphone was starting). Named the term; fix is checking the current state before acting.
+- No retype this phase (kept rare on purpose); the 3b polling loop is the next candidate.
+- AI-tool feature: **hooks** (a standing order for Claude Code). After any back-end Python edit, the tests run automatically; silent on success, reported on failure. Proven to fire. Verdict: adopt. Review with `/hooks`.
+- The Quality reviewer found two real microphone bugs (both race conditions) that the browser tests had missed; tests only check the paths you think of.
+
