@@ -12,8 +12,8 @@ export function Summary({ pack }: { pack: StudyPack }) {
           <h3 className="text-sm font-semibold">Overview</h3>
           {/* Prose has no quotes, so it cannot be checked word for word; the label says so. */}
           <p className="text-xs text-muted-foreground">
-            Written by AI from your session. Lucy cannot check it against your material; each teaching point below
-            shows the quote it comes from.
+            Written by AI from your session. Lucy cannot check it against your material; the teaching points below
+            are checked, and any Lucy cannot find in your material are marked.
           </p>
           <div className="flex flex-col gap-3 text-sm leading-relaxed">
             {pack.overview.map((paragraph, index) => (
@@ -39,7 +39,8 @@ export function Summary({ pack }: { pack: StudyPack }) {
               </span>
               <span className="flex flex-col gap-1">
                 {point.text}
-                <Source quote={point.quote} grounded={point.grounded} />
+                {/* The quote stays out of sight (it still drives the checks); only a failed check is shown. */}
+                {!point.grounded && <Source quote={point.quote} grounded={false} />}
               </span>
             </motion.li>
           ))}
