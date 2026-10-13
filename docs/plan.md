@@ -61,3 +61,4 @@ Each phase: preview, build, walkthrough, limited retype, explain-back, Quality r
 ## Amendments
 - 2026-10-10: Product named Lucy. Phase 11 reframed from a formal pitch to one-on-one demos.
 - 2026-10-12: Phase 3 split into 3a (recording) and 3b (transcription, slide text, background jobs). Phase 4 adds an editable transcript: the student corrects what Lucy heard before the AI writes the study pack.
+- 2026-10-13: Phase 4 split into 4a (edit before writing) and 4b (the generator). 4b adds a grounding check: every flashcard and quiz question carries a short quote from the material, and the server confirms the quote is really there before showing the item.

@@ -42,5 +42,7 @@ export type SendState =
   | { status: 'idle' }
   | { status: 'sending' }
   | { status: 'working'; step: string; receipt: SessionReceipt }
-  | { status: 'ready'; materials: Materials }
+  // `materials` is what Lucy produced, kept unchanged; the student's corrections live in App.
+  // `recording` and `slides` are the inputs Lucy read, to notice if they change afterwards.
+  | { status: 'ready'; materials: Materials; recording: Recording | null; slides: SlideFile[] }
   | { status: 'error'; message: string }

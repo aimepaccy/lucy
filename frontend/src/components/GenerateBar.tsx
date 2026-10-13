@@ -1,8 +1,9 @@
-import type { Ref } from 'react'
+import { useState, type Ref } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, CheckCircle2, Loader2, Mic, NotebookPen, Presentation, Sparkles } from 'lucide-react'
+import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, Mic, NotebookPen, Presentation, RefreshCw, Sparkles } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import { formatDuration, formatFileSize, plural } from '@/lib/format'
+import { hasReviewable } from '@/lib/materials'
 import { rise, spring } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 import type { Recording, SendState, SessionReceipt } from '@/types'
@@ -14,6 +15,10 @@ type GenerateBarProps = {
   recordingLive: boolean
   slideCount: number
   sendState: SendState
+  // True when the recording or slides changed after Lucy read them.
+  inputsChanged: boolean
+  // True when the student has corrected what Lucy heard and read.
+  corrected: boolean
   onGenerate: () => void
   onDismiss: () => void
 }
@@ -37,10 +42,15 @@ export function GenerateBar({
   recordingLive,
   slideCount,
   sendState,
+  inputsChanged,
+  corrected,
   onGenerate,
   onDismiss,
 }: GenerateBarProps) {
+  // Remembers which reading the student agreed to replace; a new reading starts unconfirmed.
+  const [replaceConfirmedFor, setReplaceConfirmedFor] = useState<SendState | null>(null)
   const busy = sendState.status === 'sending' || sendState.status === 'working'
+  const reviewing = sendState.status === 'ready'
 
   const chips = [
     notesWords > 0 && { key: 'notes', icon: NotebookPen, label: `${plural(notesWords, 'word')} of notes` },
@@ -53,19 +63,41 @@ export function GenerateBar({
     slideCount > 0 && { key: 'slides', icon: Presentation, label: plural(slideCount, 'slide file') },
   ].filter((chip) => chip !== false && chip !== null)
 
-  const enabled = chips.length > 0 && !busy && !recordingLive
+  // While the student reviews, the button writes the study pack (phase 4b), or reads again if the inputs changed.
+  const enabled = chips.length > 0 && !busy && !recordingLive && (!reviewing || inputsChanged)
+  const askingToReplace = reviewing && inputsChanged && corrected && replaceConfirmedFor === sendState
+  const label = reviewing
+    ? inputsChanged
+      ? askingToReplace
+        ? 'Yes, read again'
+        : 'Read again'
+      : 'Write my study pack'
+    : 'Generate study pack'
+
+  // Reading again throws away the student's corrections, so the first press only asks.
+  function handleClick() {
+    if (reviewing && inputsChanged && corrected && !askingToReplace) setReplaceConfirmedFor(sendState)
+    else onGenerate()
+  }
 
   const progress =
     sendState.status === 'sending' ? 'Uploading to Lucy' : sendState.status === 'working' ? sendState.step : null
 
-  const message =
-    sendState.status === 'working'
-      ? describeReceipt(sendState.receipt)
-      : sendState.status === 'ready'
-        ? 'Lucy has read your material. Check it above; study pack generation comes next.'
-        : sendState.status === 'error'
-          ? sendState.message
-          : null
+  function describeState(): string | null {
+    if (sendState.status === 'working') return describeReceipt(sendState.receipt)
+    if (sendState.status === 'error') return sendState.message
+    if (!reviewing || chips.length === 0) return null
+    if (askingToReplace) return 'Reading again replaces your corrections. Press "Yes, read again" to continue, or keep editing above.'
+    if (inputsChanged) {
+      const loss = corrected ? '; this replaces your corrections' : ''
+      return `Your recording or slides changed after Lucy read them. Read again to include the changes${loss}.`
+    }
+    if (!hasReviewable(sendState.materials)) return 'Lucy has your notes. Writing the study pack comes next.'
+    return 'Lucy has read your material. Correct anything it got wrong above; writing the study pack comes next.'
+  }
+
+  const message = describeState()
+  const caution = reviewing && inputsChanged
 
   const announcement = progress ?? message ?? ''
 
@@ -111,7 +143,7 @@ export function GenerateBar({
             ref={generateRef}
             type="button"
             disabled={!enabled}
-            onClick={onGenerate}
+            onClick={handleClick}
             whileHover={enabled ? { scale: 1.03 } : undefined}
             whileTap={enabled ? { scale: 0.97 } : undefined}
             transition={spring}
@@ -130,15 +162,15 @@ export function GenerateBar({
                 transition={{ duration: 1.4, repeat: Infinity, repeatDelay: 2.4, ease: 'easeInOut' }}
               />
             )}
-            {busy ? <Loader2 className="motion-safe:animate-spin" /> : <Sparkles />}
-            {progress ?? 'Generate study pack'}
+            {busy ? <Loader2 className="motion-safe:animate-spin" /> : reviewing && inputsChanged ? <RefreshCw /> : <Sparkles />}
+            {progress ?? label}
           </motion.button>
         </div>
 
         <AnimatePresence>
           {message && (
             <motion.div
-              key={sendState.status}
+              key={`${sendState.status}-${inputsChanged}-${askingToReplace}`}
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
               exit={{ opacity: 0, height: 0 }}
@@ -152,12 +184,15 @@ export function GenerateBar({
               >
                 {sendState.status === 'error' ? (
                   <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                ) : caution ? (
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
                 ) : (
                   <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
                 )}
                 <span>
                   {message}{' '}
-                  {!busy && (
+                  {/* While reviewing, the panel's own close button guards the student's corrections. */}
+                  {!busy && !reviewing && (
                     <button type="button" onClick={onDismiss} className="font-medium text-primary hover:underline">
                       Dismiss
                     </button>

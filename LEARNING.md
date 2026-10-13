@@ -109,3 +109,16 @@ Dated entries. For each session: concepts met, what clicked, mistakes worth reme
 - Retype: done by Claude at Rugimbana's request (tired): polling now tolerates up to two dropped checks in a row; tested by cutting the connection on purpose (2 dropped: continues; 3 dropped: clear message).
 - AI-tool feature: the hook proved itself (caught the 200 to 202 change at once; its slow run exposed tests calling Groq). Review agents ran in parallel in the background.
 - Process slip (Claude): two progress-file edits silently matched nothing (the phase 3a status line, then the first 3b close). Fixed; edits to these files are now checked after writing.
+
+## 2026-10-13: Phase 4a, edit before writing
+- **Human in the loop:** a person checks the AI's work before it is used (a senior signing off an intern's drug chart). The student corrects the transcript and slide text; the AI writes from the corrected version.
+- **Controlled component:** the text box shows only what comes down as `value` and sends every keystroke up through `onChange`. Remove `onChange` and typing does nothing.
+- **Lifting state up / data down, events up, in real code:** the draft lives in `App`; the panel gets a copy and phones changes up. `App` keeps Lucy's original reading unchanged next to it.
+- **Derived state:** "corrected by you" is worked out by comparing draft and original each time (like BMI from height and weight), never stored, so it cannot go out of date and Undo needs no extra code.
+- **Immutable update and reference equality:** `slides.map(...)` builds a new list with one slide replaced; React notices a change by "is this a different object?", not by reading every word. The same idea tells Lucy that the slides or recording changed after reading (`sendState.slides !== slides`).
+- **State updates are applied later, not on the spot:** `setState` notes the change and React redraws afterwards. Moving focus straight after closing the panel failed because the Generate button was still disabled; `flushSync` redraws first. Rarely needed; the principle is fundamental.
+- **Protecting the student's work:** confirm before losing corrections (close, read again), but only when there are corrections, so warnings keep their meaning.
+- Retype: `setSlideText` (immutable update). Correct and compiled first time.
+- Explain-back: Rugimbana asked for the answers to be explained instead (end of weekly AI quota). Answers given: (1) stand-ins make tests reliable, fast, free of quota and private; they cannot tell whether the real AI behaves (valid JSON, sensible content), so live checks by hand remain; (2) without `onChange`, typing does nothing because the box only shows what comes down; (3) a stored flag goes stale (type then delete a word), a comparison cannot. **Revisit all three**, plus the 3b stand-in question (now explained, not yet answered).
+- The Quality reviewer again found real bugs that 16 browser checks missed: focus lost on close, and a dead end for notes-only sessions. Tests check the paths you think of; review finds the others. Browser check extended to 24 checks, all passing.
+

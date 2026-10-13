@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-10-12
+Last updated: 2026-10-13
 
 ## Status
 Phase 0 (setup) done. Groq key checked and valid; `backend/.env` complete.
@@ -13,13 +13,16 @@ Phase 3a (recording) done on 2026-10-12: real microphone recording at 32 kbps (a
 
 Phase 3b (understanding) done on 2026-10-12: Generate answers 202 with a job number and the browser polls (tolerating up to two dropped checks). Background jobs read PDF and PowerPoint text (tables, grouped shapes, speaker notes; 300-page and zip-bomb limits; warnings for scanned or unreadable files) and transcribe audio with Whisper through the provider layer (transcription can use its own provider). Uploads are copied under generic names to a private folder deleted when the job ends; leftovers are swept at startup; results are forgotten once collected (15 minutes at most). "What Lucy heard and read" panel, labelled AI-generated; privacy notice updated to match. 32 tests pass with a stand-in for the provider; one live Groq run with a synthetic voice transcribed correctly apart from one drug-instruction word. Quality review and security review run; all findings fixed.
 
+Phase 4a (edit before writing) done on 2026-10-13: the transcript and slide text are editable; corrections are kept in `App` next to Lucy's unchanged reading, marked "corrected by you", and can be undone. Closing the panel or reading again asks first when there are corrections. If the slides or recording change after reading, the button becomes "Read again". Notes-only sessions skip the panel. "Write my study pack" is in place but switched off until 4b. Quality review run; all must-fix and recommended items fixed; Playwright check in Edge passes 24 checks.
+
 ## Next
-1. Phase 4: AI generation (summary, flashcards, quiz from the transcript, notes and slide text). Starts with a preview of tokens, context windows, temperature, structured output and hallucination. First item: make the transcript editable in the panel, so the student corrects it before Lucy writes anything (Rugimbana's idea, 2026-10-12; see plan amendment).
+1. Phase 4b: the generator (provider chat call, prompt, Pydantic schema for the study pack, one retry on invalid JSON, grounding check that each item's quote appears in the material, token measurement before deciding on chunking, plain display of the pack, tests with a stand-in). Starts with a preview of tokens, context windows, temperature, structured output and hallucination. First decision: match slide text to files by a stable id, not by position (the server skips unreadable files, so positions can differ). Before 4b, Rugimbana checks Groq's free-tier limits for the text model. Replace the placeholder bar text "writing the study pack comes next".
 2. Carry-overs to their phases:
    - Phase 4: the LLM goes through the same provider layer; the test stand-in pattern applies (no test calls the real provider).
-   - Phase 5: replace the Generate receipt with real states; compare polling with streaming.
+   - Phase 5: replace the Generate receipt with real states; compare polling with streaming. Every keystroke in the review panel redraws the whole page (draft lives in `App`); measure on a long transcript and use `memo` if it feels slow.
+   - Phase 7: a page reload loses notes, recording and corrections; decide on saving drafts or a leave-page warning.
    - Phase 10: the inline theme script in `index.html` needs a hash in the Content Security Policy; test the animated background on a low-end phone or laptop. Deploy installs from `requirements.txt` (runtime only). An early 413 during a large upload may show as "could not reach its server". The microphone needs https. Test recording on Safari or an iPhone, then decide on the MP4 brand check. Front end could read its limits from `/api/limits`. Jobs live in one process's memory: run a single worker, or move jobs to shared storage; cap concurrent jobs; uvicorn access logs record job ids. Add a time limit for parsing hostile PDFs. Windows `--reload` sometimes fails to restart the server: restart by hand if the API looks out of date.
-3. Revisit with Rugimbana: CORS (still pending); data down, events up (memory hook: "down go data and phone numbers, up go phone calls"); test stand-ins (explain-back question 3 missed on 2026-10-12).
+3. Revisit with Rugimbana: CORS (still pending); data down, events up (memory hook: "down go data and phone numbers, up go phone calls"); test stand-ins, controlled components and derived state (phase 4a explain-back answers were explained, not yet answered by Rugimbana).
 
 ## Blockers
 None.
@@ -53,3 +56,5 @@ None.
 - 2026-10-12: Background jobs with polling (202 Accepted + `GET /api/jobs/{id}`), jobs kept in memory, results handed over once. Simple and enough for one-on-one demos; shared storage only if Lucy ever runs on several servers.
 - 2026-10-12: Transcription can use its own OpenAI-compatible provider (`TRANSCRIBE_BASE_URL`, `TRANSCRIBE_API_KEY`), defaulting to the LLM provider, because not every provider offers speech-to-text.
 - 2026-10-12: Editable transcript before generation (Rugimbana's idea): AI transcription makes mistakes (live test: "nebulasts" for "nebulised"), so the student corrects it and the AI works from the corrected version. Scheduled as the first item of phase 4.
+- 2026-10-13: Phase 4 split into 4a (edit before writing) and 4b (the generator). 4b adds a grounding check: each flashcard and question carries a short quote from the material, and the server checks the quote is really there.
+- 2026-10-13: One button that follows the stage: Generate, then (while reviewing) Write my study pack, or Read again if the inputs changed. Reading again with corrections asks first.

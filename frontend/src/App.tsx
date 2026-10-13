@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { MotionConfig, motion } from 'motion/react'
 import { Background } from '@/components/Background'
 import { GenerateBar } from '@/components/GenerateBar'
@@ -13,8 +14,9 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { useTheme } from '@/hooks/use-theme'
 import { ApiError, sendSession, waitForJob } from '@/lib/api'
 import { countWords } from '@/lib/format'
+import { hasCorrections, hasReviewable } from '@/lib/materials'
 import { stagger } from '@/lib/motion'
-import type { Recording, SendState, SlideFile } from '@/types'
+import type { Materials, Recording, SendState, SlideFile } from '@/types'
 
 export default function App() {
   const { theme, chooseTheme } = useTheme()
@@ -23,26 +25,43 @@ export default function App() {
   const [recordingLive, setRecordingLive] = useState(false)
   const [slides, setSlides] = useState<SlideFile[]>([])
   const [sendState, setSendState] = useState<SendState>({ status: 'idle' })
+  // The student's corrected copy of what Lucy heard and read; the AI will write from this.
+  const [draft, setDraft] = useState<Materials | null>(null)
   const generateRef = useRef<HTMLButtonElement>(null)
 
   // The panel's close button disappears with it, so keyboard focus moves to a sensible place.
+  // flushSync redraws first: until then the Generate button is still switched off and cannot take focus.
   function closeMaterials() {
-    setSendState({ status: 'idle' })
-    generateRef.current?.focus()
+    flushSync(() => {
+      setSendState({ status: 'idle' })
+      setDraft(null)
+    })
+    const generate = generateRef.current
+    if (generate && !generate.disabled) generate.focus()
+    else document.getElementById('notes')?.focus()
   }
 
   async function handleGenerate() {
     setSendState({ status: 'sending' })
+    setDraft(null)
     try {
       const { job_id, receipt } = await sendSession(notes, slides, recording)
       setSendState({ status: 'working', step: 'Waiting to start', receipt })
       const materials = await waitForJob(job_id, (step) => setSendState({ status: 'working', step, receipt }))
-      setSendState({ status: 'ready', materials })
+      setSendState({ status: 'ready', materials, recording, slides })
+      setDraft(materials)
     } catch (error) {
       const message = error instanceof ApiError ? error.message : 'Something went wrong. Please try again.'
       setSendState({ status: 'error', message })
     }
   }
+
+  // Adding or removing a slide makes a new list, and a new recording is a new object, so comparing
+  // them with what Lucy read tells us whether the panel still matches the inputs.
+  const inputsChanged = sendState.status === 'ready' && (sendState.recording !== recording || sendState.slides !== slides)
+  const corrected = sendState.status === 'ready' && draft !== null && hasCorrections(sendState.materials, draft)
+  const showPanel =
+    sendState.status === 'ready' && (hasReviewable(sendState.materials) || sendState.materials.warnings.length > 0)
 
   return (
     <MotionConfig reducedMotion="user">
@@ -70,8 +89,8 @@ export default function App() {
             </motion.div>
           </div>
 
-          {sendState.status === 'ready' && (
-            <MaterialsPanel materials={sendState.materials} onClose={closeMaterials} />
+          {showPanel && sendState.status === 'ready' && draft && (
+            <MaterialsPanel heard={sendState.materials} draft={draft} onChange={setDraft} onClose={closeMaterials} />
           )}
 
           <GenerateBar
@@ -81,6 +100,8 @@ export default function App() {
             recordingLive={recordingLive}
             slideCount={slides.length}
             sendState={sendState}
+            inputsChanged={inputsChanged}
+            corrected={corrected}
             onGenerate={handleGenerate}
             onDismiss={() => setSendState({ status: 'idle' })}
           />
