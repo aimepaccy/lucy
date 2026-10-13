@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { Check } from 'lucide-react'
 import { spring } from '@/lib/motion'
 import { cn } from '@/lib/utils'
@@ -18,6 +18,8 @@ type StepsProps = {
 
 export function Steps({ steps, current, busy }: StepsProps) {
   const position = current === 'done' ? steps.length : steps.indexOf(current)
+  // With reduced motion the pulse would still blink forever, so it is left out.
+  const pulse = !useReducedMotion()
 
   return (
     <ol className="flex items-center gap-1.5 text-xs" aria-label="Progress">
@@ -40,7 +42,7 @@ export function Steps({ steps, current, busy }: StepsProps) {
               )}
             >
               {finished ? <Check className="size-3" aria-hidden="true" /> : index + 1}
-              {active && busy && (
+              {active && busy && pulse && (
                 <motion.span
                   aria-hidden="true"
                   className="absolute size-5 rounded-full border border-primary"
@@ -49,7 +51,7 @@ export function Steps({ steps, current, busy }: StepsProps) {
                 />
               )}
             </motion.span>
-            <span className={cn(active ? 'font-medium text-foreground' : 'text-muted-foreground', !active && 'hidden sm:inline')}>
+            <span className={cn(active ? 'font-medium text-foreground' : 'text-muted-foreground', !active && 'sr-only sm:not-sr-only')}>
               {LABELS[step]}
               {finished && <span className="sr-only"> (done)</span>}
               {/* A new key for each step gives a fresh timer starting at zero. */}

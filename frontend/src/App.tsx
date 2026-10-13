@@ -16,7 +16,7 @@ import { useLimits } from '@/hooks/use-limits'
 import { useTheme } from '@/hooks/use-theme'
 import { ApiError, sendSession, waitForJob, writePack } from '@/lib/api'
 import { countWords } from '@/lib/format'
-import { hasCorrections, hasReviewable } from '@/lib/materials'
+import { hasCorrections, needsCheck } from '@/lib/materials'
 import { stagger } from '@/lib/motion'
 import type { Materials, Recording, SendState, SlideFile, WriteState } from '@/types'
 
@@ -76,8 +76,10 @@ export default function App() {
       setSendState({ status: 'error', message: messageOf(error) })
       return
     }
-    // Nothing to check (notes only), so Lucy goes straight on to writing.
-    if (!hasReviewable(materials) && materials.warnings.length === 0) await handleWrite(materials)
+    // Nothing to check (notes only), so Lucy goes straight on to writing, unless the notes are already
+    // too long: then the bar explains instead of sending a request that would be refused.
+    const tooLong = limits !== null && notes.length > limits.max_pack_chars
+    if (!needsCheck(materials) && !tooLong) await handleWrite(materials)
   }
 
   // Writes from the corrected copy. The review state stays as it is, so a failure loses no corrections.
@@ -101,8 +103,7 @@ export default function App() {
   const corrected = sendState.status === 'ready' && draft !== null && hasCorrections(sendState.materials, draft)
   const packText = draft ? [notes, draft.transcript ?? '', ...draft.slides.map((slide) => slide.text)].join('\n') : ''
   const packSize = draft ? { chars: packText.length } : null
-  const showPanel =
-    sendState.status === 'ready' && (hasReviewable(sendState.materials) || sendState.materials.warnings.length > 0)
+  const showPanel = sendState.status === 'ready' && needsCheck(sendState.materials)
 
   return (
     <MotionConfig reducedMotion="user">

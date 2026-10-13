@@ -263,3 +263,14 @@ def test_only_a_broken_form_counts_as_invalid_output(monkeypatch):
         real_write_json(monkeypatch, error=bad_request('model_not_supported'))
     assert not isinstance(refused.value, providers.InvalidOutput)
     assert 'model settings' in str(refused.value)
+
+
+def test_text_at_the_shown_limit_is_never_refused():
+    # The browser counts the raw texts joined by line breaks; the server adds its tags. At the limit the
+    # browser shows, with every part present, the server must still accept.
+    limit = client.get('/api/limits').json()['max_pack_chars']
+    parts = 7  # notes, transcript, five slide files
+    size = (limit - (parts - 1)) // parts
+    body = {'notes': 'a' * size, 'transcript': 'b' * size, 'slides': [{'text': 'c' * size} for _ in range(5)]}
+    assert client.post('/api/packs', json=body).status_code == 202
+

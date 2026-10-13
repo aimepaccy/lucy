@@ -22,6 +22,9 @@ CHARS_PER_TOKEN = 3.5
 # Measured on a role-played round: about 6 characters per word, spaces included. Words shown to the student
 # are worked out from characters at this rate, so the number shown is the number the check applies.
 CHARS_PER_WORD = 6
+# The tags Lucy wraps around the material (<material>, <notes>, <transcript>, five <slides>) take about 220
+# characters. The limit shown to the student leaves room for them, so text under it is never refused.
+TAG_ALLOWANCE = 250
 # A quote shorter than this proves little: "asthma" appears in any asthma session.
 MIN_QUOTE_WORDS = 4
 MIN_PIECE_WORDS = 3
@@ -99,7 +102,7 @@ def allowed_words() -> int:
 
 def allowed_chars() -> int:
     """The limit the budget check really applies, so the browser can show the same one."""
-    return int(_allowed_tokens() * CHARS_PER_TOKEN)
+    return int(_allowed_tokens() * CHARS_PER_TOKEN) - TAG_ALLOWANCE
 
 
 def check_budget(material: str) -> None:

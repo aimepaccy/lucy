@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowRight, Check, RotateCcw, Trophy, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -14,12 +14,20 @@ export function Quiz({ questions }: { questions: Question[] }) {
   const [index, setIndex] = useState(0)
   // One entry per question: the letter chosen, or null while unanswered.
   const [chosen, setChosen] = useState<(Letter | null)[]>(() => questions.map(() => null))
+  // Set when the student moves on, so the next question's text takes keyboard focus once it appears.
+  const moved = useRef(false)
   // Counted from the answers each time, never stored.
-  const score = chosen.filter((letter, i) => letter === questions[i].answer).length
+  const score = chosen.filter((letter, i) => letter === questions[i]?.answer).length
 
   function restart() {
+    moved.current = true
     setChosen(questions.map(() => null))
     setIndex(0)
+  }
+
+  function next() {
+    moved.current = true
+    setIndex(index + 1)
   }
 
   if (index === questions.length) {
@@ -33,7 +41,7 @@ export function Quiz({ questions }: { questions: Question[] }) {
         <div className="grid size-12 place-items-center rounded-full bg-accent text-accent-foreground">
           <Trophy className="size-6" aria-hidden="true" />
         </div>
-        <p className="text-lg font-semibold" role="status">
+        <p id="quiz-score" className="text-lg font-semibold">
           You scored {score} out of {questions.length}.
         </p>
         <p className="max-w-md text-sm text-muted-foreground">
@@ -41,7 +49,8 @@ export function Quiz({ questions }: { questions: Question[] }) {
             ? 'Every one right. Try the flashcards to keep it fresh.'
             : 'Go back over the explanations for the ones you missed, then try again.'}
         </p>
-        <Button onClick={restart} autoFocus>
+        {/* Focus lands here, and the description makes screen readers read the score with it. */}
+        <Button onClick={restart} autoFocus aria-describedby="quiz-score">
           <RotateCcw />
           Try again
         </Button>
@@ -50,7 +59,7 @@ export function Quiz({ questions }: { questions: Question[] }) {
   }
 
   const question = questions[index]
-  const answer = chosen[index]
+  const answer = chosen[index] ?? null
   const answered = answer !== null
 
   function choose(letter: Letter) {
@@ -82,7 +91,17 @@ export function Quiz({ questions }: { questions: Question[] }) {
           transition={spring}
           className="flex flex-col gap-3"
         >
-          <p id={`stem-${index}`} className="font-medium text-pretty">
+          <p
+            id={`stem-${index}`}
+            tabIndex={-1}
+            ref={(node) => {
+              if (node && moved.current) {
+                node.focus()
+                moved.current = false
+              }
+            }}
+            className="font-medium text-pretty outline-none"
+          >
             {question.stem}
           </p>
 
@@ -103,12 +122,12 @@ export function Quiz({ questions }: { questions: Question[] }) {
                       !answered && 'cursor-pointer hover:border-primary/50 hover:bg-accent/50',
                       answered && right && 'border-primary bg-primary/10',
                       answered && picked && !right && 'border-destructive bg-destructive/10',
-                      answered && !right && !picked && 'opacity-75',
                     )}
                   >
                     <span
                       className={cn(
                         'grid size-6 shrink-0 place-items-center rounded-full border text-xs font-semibold',
+                        answered && !right && !picked && 'opacity-60',
                         answered && right && 'border-primary bg-primary text-primary-foreground',
                         answered && picked && !right && 'border-destructive bg-destructive text-white',
                       )}
@@ -117,7 +136,8 @@ export function Quiz({ questions }: { questions: Question[] }) {
                       {answered && right ? <Check className="size-3.5" /> : answered && picked ? <X className="size-3.5" /> : letter}
                     </span>
                     <span className="flex flex-col gap-1">
-                      <span className="font-medium">
+                      {/* Only the option fades once answered, never its explanation: that is the teaching. */}
+                      <span className={cn('font-medium', answered && !right && !picked && 'text-muted-foreground')}>
                         <span className="sr-only">{letter}. </span>
                         {option.text}
                         {answered && right && <span className="sr-only"> (the best answer)</span>}
@@ -143,7 +163,7 @@ export function Quiz({ questions }: { questions: Question[] }) {
               className="flex flex-col gap-3"
             >
               <Source quote={question.quote} grounded={question.grounded} />
-              <Button className="self-end" onClick={() => setIndex(index + 1)} autoFocus>
+              <Button className="self-end" onClick={next} autoFocus>
                 {index + 1 === questions.length ? 'See your score' : 'Next question'}
                 <ArrowRight />
               </Button>

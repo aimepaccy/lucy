@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent, type ReactNode } from 'react'
+import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -11,11 +11,15 @@ import type { Flashcard } from '@/types'
 export function Flashcards({ cards }: { cards: Flashcard[] }) {
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
+  // A new card is a new button (see its key), so focus has to be handed over to it.
+  const focusNewCard = useRef(false)
   const card = cards[index]
+  if (!card) return null
 
   function go(step: number) {
     const next = index + step
     if (next < 0 || next >= cards.length) return
+    focusNewCard.current = document.activeElement?.hasAttribute('data-flashcard') ?? false
     setIndex(next)
     setFlipped(false)
   }
@@ -27,26 +31,34 @@ export function Flashcards({ cards }: { cards: Flashcard[] }) {
     event.preventDefault()
   }
 
+  const question = `Question: ${sentence(card.front)}`
+  const answer = `Answer: ${sentence(card.back)} ${card.grounded ? `From your session: "${card.quote}"` : 'Lucy could not find this in your material.'}`
+
   return (
     <div className="flex flex-col gap-4" onKeyDown={onKeyDown}>
       <p className="text-center text-xs text-muted-foreground">
-        <span aria-live="polite">
-          Card {index + 1} of {cards.length}.
-        </span>{' '}
-        Click or press Space to turn it over; arrow keys move between cards.
+        Card {index + 1} of {cards.length}. Tap or press Space to turn it over; arrow keys move between cards.
+      </p>
+      {/* Read out when the card changes or turns over; a focused button's new label often is not. */}
+      <p className="sr-only" aria-live="polite">
+        Card {index + 1} of {cards.length}. {flipped ? answer : question}
       </p>
 
-      {/* The card turns around its vertical axis; each face hides when it faces away. */}
+      {/* The card turns around its vertical axis; each face hides when it faces away.
+          The key makes each card a new button, so the next card never shows its answer while turning back. */}
       <div className="mx-auto w-full max-w-xl [perspective:1200px]">
         <motion.button
           key={index}
+          ref={(node) => {
+            if (node && focusNewCard.current) {
+              node.focus()
+              focusNewCard.current = false
+            }
+          }}
+          data-flashcard=""
           type="button"
           onClick={() => setFlipped((side) => !side)}
-          aria-label={
-            flipped
-              ? `Answer: ${card.back}.${card.grounded ? '' : ' Lucy could not find this in your material.'} Turn back to the question.`
-              : `Question: ${card.front}. Turn over for the answer.`
-          }
+          aria-label={flipped ? `${answer} Turn back to the question.` : `${question} Turn over for the answer.`}
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0, rotateY: flipped ? 180 : 0 }}
           transition={spring}
@@ -64,8 +76,16 @@ export function Flashcards({ cards }: { cards: Flashcard[] }) {
         </motion.button>
       </div>
 
+      {/* aria-disabled, not disabled: a disabled button drops keyboard focus on the first and last card. */}
       <div className="flex items-center justify-center gap-2">
-        <Button variant="outline" size="icon" onClick={() => go(-1)} disabled={index === 0} aria-label="Previous card">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => go(-1)}
+          aria-disabled={index === 0}
+          aria-label="Previous card"
+          className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        >
           <ChevronLeft />
         </Button>
         <Button variant="ghost" size="sm" onClick={() => setFlipped((side) => !side)}>
@@ -76,8 +96,9 @@ export function Flashcards({ cards }: { cards: Flashcard[] }) {
           variant="outline"
           size="icon"
           onClick={() => go(1)}
-          disabled={index === cards.length - 1}
+          aria-disabled={index === cards.length - 1}
           aria-label="Next card"
+          className="aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
         >
           <ChevronRight />
         </Button>
@@ -86,12 +107,17 @@ export function Flashcards({ cards }: { cards: Flashcard[] }) {
   )
 }
 
+// Ends a text with exactly one full stop, so labels never read "..".
+function sentence(text: string) {
+  return `${text.trim().replace(/[.\s]+$/, '')}.`
+}
+
 // Spans, not divs: a button may only contain inline elements.
 function Face({ back = false, children }: { back?: boolean; children: ReactNode }) {
   return (
     <span
       className={cn(
-        'col-start-1 row-start-1 flex flex-col items-center justify-center gap-3 rounded-xl border bg-background/70 p-6 text-center shadow-sm [backface-visibility:hidden]',
+        'col-start-1 row-start-1 flex flex-col items-center justify-center gap-3 rounded-xl border bg-background/70 p-6 text-center shadow-sm backface-hidden',
         back && '[transform:rotateY(180deg)]',
       )}
     >

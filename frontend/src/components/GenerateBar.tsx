@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { AlertCircle, AlertTriangle, CheckCircle2, Loader2, Mic, NotebookPen, Presentation, RefreshCw, Sparkles } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import { formatDuration, formatFileSize, plural } from '@/lib/format'
-import { hasReviewable } from '@/lib/materials'
+import { hasReviewable, needsCheck } from '@/lib/materials'
 import { rise, spring } from '@/lib/motion'
 import { Steps, type StepKey } from '@/components/Steps'
 import { cn } from '@/lib/utils'
@@ -83,22 +83,19 @@ export function GenerateBar({
   const enabled = chips.length > 0 && !busy && !recordingLive && !tooLong
 
   // Check is skipped when there is nothing to check (notes only).
-  const willCheck = reviewing ? hasReviewable(sendState.materials) || sendState.materials.warnings.length > 0 : recording !== null || slideCount > 0
+  const willCheck = reviewing ? needsCheck(sendState.materials) : recording !== null || slideCount > 0
   const steps: StepKey[] = willCheck ? ['upload', 'read', 'check', 'write'] : ['upload', 'read', 'write']
-  const currentStep: StepKey | 'done' | null =
-    sendState.status === 'sending'
-      ? 'upload'
-      : sendState.status === 'working'
-        ? 'read'
-        : !reviewing
-          ? null
-          : writeState.status === 'writing'
-            ? 'write'
-            : writeState.status === 'done'
-              ? 'done'
-              : willCheck
-                ? 'check'
-                : 'write'
+
+  function stepNow(): StepKey | 'done' | null {
+    if (sendState.status === 'sending') return 'upload'
+    if (sendState.status === 'working') return 'read'
+    if (!reviewing) return null
+    if (writeState.status === 'writing') return 'write'
+    if (writeState.status === 'done') return 'done'
+    return willCheck ? 'check' : 'write'
+  }
+
+  const currentStep = stepNow()
   const askingToReplace = reviewing && inputsChanged && corrected && replaceConfirmedFor === sendState
   const label = reviewing
     ? inputsChanged
@@ -282,6 +279,7 @@ function WordMeter({ size, limits }: { size: PackSize; limits: Limits }) {
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={Math.round(share * 100)}
+        aria-valuetext={`About ${words.toLocaleString()} of ${limits.max_pack_words.toLocaleString()} words`}
         className="h-1.5 w-20 overflow-hidden rounded-full bg-muted"
       >
         <motion.div

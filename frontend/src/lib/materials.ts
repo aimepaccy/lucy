@@ -9,3 +9,9 @@ export function hasCorrections(heard: Materials, draft: Materials) {
 export function hasReviewable(materials: Materials) {
   return materials.transcript !== null || materials.slides.length > 0
 }
+
+// Whether the student stops to check what Lucy heard and read: text to correct, or warnings to see.
+// One rule for the panel, the steps and the automatic writing, so they always agree.
+export function needsCheck(materials: Materials) {
+  return hasReviewable(materials) || materials.warnings.length > 0
+}
