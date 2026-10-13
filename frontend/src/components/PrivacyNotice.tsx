@@ -13,7 +13,8 @@ export function PrivacyNotice() {
         <span className="font-semibold">Role-play and teaching only.</span> Never record real patients or add
         anything that could identify one. To build a study pack, your content is sent to an outside AI service.
         Lucy's server deletes your files once it has read them, and keeps the text only until your browser collects
-        it.
+        it. Your notes and study packs are saved in this browser only; on a shared computer, delete them when you
+        finish.
       </p>
     </motion.aside>
   )

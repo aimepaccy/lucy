@@ -100,8 +100,8 @@ export type JobState = {
 export type WriteState =
   | { status: 'idle' }
   | { status: 'writing'; step: string }
-  // `run` numbers each pack, so a new pack starts with fresh cards and quiz.
-  | { status: 'done'; pack: StudyPack; run: number }
+  // The pack itself is shown and saved by App; this only says the write finished.
+  | { status: 'done' }
   | { status: 'error'; message: string }
 
 export type SendState =
