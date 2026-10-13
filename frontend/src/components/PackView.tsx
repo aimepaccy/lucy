@@ -1,20 +1,26 @@
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
-import { AlertTriangle, BookOpenCheck, Search } from 'lucide-react'
+import { BookOpenCheck, Layers, ListChecks, NotebookText, Search } from 'lucide-react'
+import { Tabs } from 'radix-ui'
 import { Panel } from '@/components/Panel'
+import { Flashcards } from '@/components/pack/Flashcards'
+import { Quiz } from '@/components/pack/Quiz'
 import type { StudyPack } from '@/types'
 
-const LETTERS = ['A', 'B', 'C', 'D', 'E'] as const
-
-// A plain first view of the study pack. Phase 5 turns it into flip cards and an interactive quiz.
 export function PackView({ pack }: { pack: StudyPack }) {
-  const headingRef = useRef<HTMLDivElement>(null)
+  const startRef = useRef<HTMLDivElement>(null)
 
   // Bring the new pack into view and tell screen reader users it has arrived, unless the student is typing.
   useEffect(() => {
     const active = document.activeElement
-    if (!(active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement)) headingRef.current?.focus()
+    if (!(active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement)) startRef.current?.focus()
   }, [pack])
+
+  const tabs = [
+    { value: 'summary', label: 'Summary', icon: NotebookText, count: null },
+    { value: 'cards', label: 'Flashcards', icon: Layers, count: pack.flashcards.length },
+    { value: 'quiz', label: 'Quiz', icon: ListChecks, count: pack.questions.length },
+  ]
 
   return (
     <motion.div initial="hidden" animate="show">
@@ -23,109 +29,79 @@ export function PackView({ pack }: { pack: StudyPack }) {
         title={pack.title}
         description="Your study pack, written by AI from your session. Check it against trusted sources."
       >
-        <div ref={headingRef} tabIndex={-1} aria-label={`Study pack: ${pack.title}`} className="flex flex-col gap-6 outline-none">
-          {pack.summary.length > 0 && (
-            <Section title="Key teaching points">
-              <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm leading-relaxed">
-                {pack.summary.map((point, index) => (
-                  <li key={index}>{point}</li>
-                ))}
-              </ul>
-            </Section>
-          )}
+        <div ref={startRef} tabIndex={-1} aria-label={`Study pack: ${pack.title}`} className="outline-none">
+          {/* Radix gives the tabs their roles and arrow-key movement; we only style them. */}
+          <Tabs.Root defaultValue="summary" className="flex flex-col gap-5">
+            <Tabs.List aria-label="Parts of the study pack" className="flex gap-1 rounded-lg bg-muted p-1">
+              {tabs.map(({ value, label, icon: Icon, count }) => (
+                <Tabs.Trigger
+                  key={value}
+                  value={value}
+                  disabled={count === 0}
+                  className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm sm:gap-2 sm:px-3 font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                >
+                  {/* No icons on phones: three labels already fill the row. */}
+                  <Icon className="hidden size-4 sm:block" aria-hidden="true" />
+                  {label}
+                  {count !== null && <span className="text-xs text-muted-foreground tabular-nums">{count}</span>}
+                </Tabs.Trigger>
+              ))}
+            </Tabs.List>
 
-          {pack.flashcards.length > 0 && (
-            <Section title="Flashcards">
-              <div className="grid gap-3 sm:grid-cols-2">
-                {pack.flashcards.map((card, index) => (
-                  <div key={index} className="flex flex-col gap-1.5 rounded-lg border bg-background/50 p-3 text-sm">
-                    <p className="font-medium">{card.front}</p>
-                    <p className="text-muted-foreground">{card.back}</p>
-                    <Source quote={card.quote} grounded={card.grounded} />
+            <Tabs.Content value="summary" className="flex flex-col gap-6 outline-none">
+              {pack.summary.length > 0 && (
+                <section className="flex flex-col gap-2">
+                  <h3 className="text-sm font-semibold">Key teaching points</h3>
+                  <ul className="flex flex-col gap-2">
+                    {pack.summary.map((point, index) => (
+                      <motion.li
+                        key={index}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.04 }}
+                        className="flex gap-3 rounded-lg border bg-background/50 p-3 text-sm leading-relaxed"
+                      >
+                        <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-accent text-[0.7rem] font-semibold text-accent-foreground">
+                          {index + 1}
+                        </span>
+                        {point}
+                      </motion.li>
+                    ))}
+                  </ul>
+                </section>
+              )}
+
+              {pack.search_terms.length > 0 && (
+                <section className="flex flex-col gap-2">
+                  <h3 className="text-sm font-semibold">Search terms for further reading</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {pack.search_terms.map((term, index) => (
+                      <span
+                        key={index}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
+                      >
+                        <Search className="size-3.5" aria-hidden="true" />
+                        {term}
+                      </span>
+                    ))}
                   </div>
-                ))}
-              </div>
-            </Section>
-          )}
+                </section>
+              )}
+            </Tabs.Content>
 
-          {pack.questions.length > 0 && (
-            <Section title="Exam-style questions">
-              <ol className="flex flex-col gap-4">
-                {pack.questions.map((question, index) => (
-                  <li key={index} className="flex flex-col gap-2 rounded-lg border bg-background/50 p-3 text-sm">
-                    <p className="font-medium">
-                      {index + 1}. {question.stem}
-                    </p>
-                    <ul className="flex flex-col gap-1">
-                      {question.options.map((option, i) => (
-                        <li key={i}>
-                          <span className="font-medium">{LETTERS[i]}.</span> {option.text}
-                        </li>
-                      ))}
-                    </ul>
-                    <details className="group">
-                      <summary className="cursor-pointer text-xs font-medium text-primary hover:underline">
-                        Show the answer and explanations
-                      </summary>
-                      <div className="mt-2 flex flex-col gap-1.5">
-                        <p>
-                          <span className="font-medium">Answer: {question.answer}</span>
-                        </p>
-                        {question.options.map((option, i) => (
-                          <p key={i} className={LETTERS[i] === question.answer ? '' : 'text-muted-foreground'}>
-                            <span className="font-medium">{LETTERS[i]}.</span> {option.explanation}
-                          </p>
-                        ))}
-                        <Source quote={question.quote} grounded={question.grounded} />
-                      </div>
-                    </details>
-                  </li>
-                ))}
-              </ol>
-            </Section>
-          )}
+            {/* Kept mounted while hidden, so switching tabs does not lose the place in the cards or the quiz. */}
+            <Tabs.Content value="cards" forceMount className="outline-none data-[state=inactive]:hidden">
+              <Flashcards cards={pack.flashcards} />
+            </Tabs.Content>
 
-          {pack.search_terms.length > 0 && (
-            <Section title="Search terms for further reading">
-              <div className="flex flex-wrap gap-2">
-                {pack.search_terms.map((term, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
-                  >
-                    <Search className="size-3.5" aria-hidden="true" />
-                    {term}
-                  </span>
-                ))}
-              </div>
-            </Section>
-          )}
+            <Tabs.Content value="quiz" forceMount className="outline-none data-[state=inactive]:hidden">
+              <Quiz questions={pack.questions} />
+            </Tabs.Content>
+          </Tabs.Root>
 
-          <p className="text-xs text-muted-foreground">AI-generated by {pack.model}. It can contain mistakes.</p>
+          <p className="mt-5 text-xs text-muted-foreground">AI-generated by {pack.model}. It can contain mistakes.</p>
         </div>
       </Panel>
     </motion.div>
-  )
-}
-
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <h3 className="text-sm font-semibold">{title}</h3>
-      {children}
-    </section>
-  )
-}
-
-// Where the item comes from in the student's material, or a warning that Lucy could not find it there.
-function Source({ quote, grounded }: { quote: string; grounded: boolean }) {
-  if (grounded) {
-    return <p className="text-xs text-muted-foreground italic">From your session: "{quote}"</p>
-  }
-  return (
-    <p className="flex items-start gap-1.5 text-xs font-medium">
-      <AlertTriangle className="mt-0.5 size-3.5 shrink-0 text-warning" aria-hidden="true" />
-      Lucy could not find this in your material. Check it before you rely on it.
-    </p>
   )
 }

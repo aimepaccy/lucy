@@ -87,7 +87,7 @@ export default function App() {
       const { job_id } = await writePack(notes, materials)
       const job = await waitForJob(job_id, (step) => update({ status: 'writing', step }))
       if (!job.pack) throw new ApiError('Lucy could not write your study pack.')
-      update({ status: 'done', pack: job.pack })
+      update({ status: 'done', pack: job.pack, run })
     } catch (error) {
       update({ status: 'error', message: messageOf(error) })
     }
@@ -146,7 +146,7 @@ export default function App() {
             />
           )}
 
-          {writeState.status === 'done' && <PackView pack={writeState.pack} />}
+          {writeState.status === 'done' && <PackView key={writeState.run} pack={writeState.pack} />}
 
           <GenerateBar
             generateRef={generateRef}

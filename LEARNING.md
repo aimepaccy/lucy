@@ -134,6 +134,9 @@ Dated entries. For each session: concepts met, what clicked, mistakes worth reme
 - **Vendor independence includes limits:** model, tokens per minute and reasoning effort are all in `.env`.
 - **The Quality reviewer's clinical catch:** the first grounding check ignored symbols, so "5 µg" matched "5 g" (a millionfold dose difference) and "< 92%" matched "> 92%". Fixed with Unicode normalisation (NFKC) that keeps symbols as words. Also fixed: a race (closing the panel during a write let an abandoned pack appear later; each write now has a number and only the latest counts), links filtered out of the pack, a 2 MB body limit for text requests, only the "broke the form" error is retried, error bodies never logged (they can echo the student's material), options shuffled because models favour some answer positions.
 - Retype: none this half (kept rare; the quota reset was close).
-- Explain-back (not yet answered): (1) why a 131,000-token model refuses about 2,500 words; (2) why "at most 10" and not "exactly 10"; (3) what "Lucy could not find this in your material" means and what the student should do. **Revisit.**
+- Explain-back answers:
+  1. Why a 131,000-token model refuses about 2,500 words: half right. Input and output do share the budget, but the deciding limit is the free plan's rate limit (8,000 tokens a minute), not the context window (what the model can hold). Keep the two terms apart. **Revisit.**
+  2. "At most 10", not "exactly 10": right. A forced count pushes the AI to invent.
+  3. "Not found in your material": right spirit. Sharper: the item's quote could not be found word for word in the student's material, so the item is unverified, not necessarily wrong (it may be paraphrased, stitched or invented); check it against notes or a trusted source before relying on it. The term is grounding.
 - AI-tool features: the hook caught the new `pack` field at once; the Quality reviewer, asked to cover security too, found 16 items including a must-fix race and the dose-unit bug. A memory note now records that `git -c http.version=HTTP/1.1 push` gets past this network's connection resets.
 

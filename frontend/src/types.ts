@@ -64,7 +64,8 @@ export type JobState = {
 export type WriteState =
   | { status: 'idle' }
   | { status: 'writing'; step: string }
-  | { status: 'done'; pack: StudyPack }
+  // `run` numbers each pack, so a new pack starts with fresh cards and quiz.
+  | { status: 'done'; pack: StudyPack; run: number }
   | { status: 'error'; message: string }
 
 export type SendState =
