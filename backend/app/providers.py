@@ -79,8 +79,13 @@ def write_json(instructions: str, material: str, form: type[BaseModel], max_toke
             **extra,
         )
     except openai.BadRequestError as error:
-        # Groq answers 400 when the model's output breaks the schema; other providers may too.
-        raise InvalidOutput('The AI wrote something Lucy could not use.') from error
+        # Groq answers 400 with this code when the model's output breaks the form: worth another try.
+        if error.code == 'json_validate_failed':
+            raise InvalidOutput('The AI wrote something Lucy could not use.') from error
+        # Any other 400 is about the request itself, often a model or setting this provider does not support.
+        raise ProviderError(
+            "The writing service turned down Lucy's request. The AI model settings may not suit this provider."
+        ) from error
     except openai.APIError as error:
         raise _translate(error, 'writing') from error
 

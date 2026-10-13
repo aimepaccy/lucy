@@ -54,7 +54,8 @@ export function GenerateBar({
   // Remembers which reading the student agreed to replace; a new reading starts unconfirmed.
   const [replaceConfirmedFor, setReplaceConfirmedFor] = useState<SendState | null>(null)
   const reviewing = sendState.status === 'ready'
-  const writing = reviewing && writeState.status === 'writing'
+  // Busy whenever a write is running, even if the panel was closed meanwhile.
+  const writing = writeState.status === 'writing'
   const busy = sendState.status === 'sending' || sendState.status === 'working' || writing
 
   const chips = [
@@ -93,7 +94,7 @@ export function GenerateBar({
       ? 'Uploading to Lucy'
       : sendState.status === 'working'
         ? sendState.step
-        : writeState.status === 'writing' && reviewing
+        : writeState.status === 'writing'
           ? writeState.step
           : null
 

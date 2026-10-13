@@ -30,6 +30,19 @@ export default function App() {
   const [draft, setDraft] = useState<Materials | null>(null)
   const [writeState, setWriteState] = useState<WriteState>({ status: 'idle' })
   const generateRef = useRef<HTMLButtonElement>(null)
+  // Each write gets a number. A write that finishes after the student moved on (closed the panel or
+  // read again) is no longer the latest, and its result is ignored.
+  const latestWrite = useRef(0)
+
+  function forgetWrite() {
+    latestWrite.current += 1
+    setWriteState({ status: 'idle' })
+  }
+
+  // An error about the old text no longer applies once the student changes it.
+  function clearWriteError() {
+    if (writeState.status === 'error') setWriteState({ status: 'idle' })
+  }
 
   // The panel's close button disappears with it, so keyboard focus moves to a sensible place.
   // flushSync redraws first: until then the Generate button is still switched off and cannot take focus.
@@ -37,6 +50,7 @@ export default function App() {
     flushSync(() => {
       setSendState({ status: 'idle' })
       setDraft(null)
+      forgetWrite()
     })
     const generate = generateRef.current
     if (generate && !generate.disabled) generate.focus()
@@ -46,7 +60,7 @@ export default function App() {
   async function handleGenerate() {
     setSendState({ status: 'sending' })
     setDraft(null)
-    setWriteState({ status: 'idle' })
+    forgetWrite()
     let materials: Materials
     try {
       const { job_id, receipt } = await sendSession(notes, slides, recording)
@@ -66,14 +80,16 @@ export default function App() {
 
   // Writes from the corrected copy. The review state stays as it is, so a failure loses no corrections.
   async function handleWrite(materials: Materials) {
-    setWriteState({ status: 'writing', step: 'Sending to Lucy' })
+    const run = ++latestWrite.current
+    const update = (state: WriteState) => run === latestWrite.current && setWriteState(state)
+    update({ status: 'writing', step: 'Sending to Lucy' })
     try {
       const { job_id } = await writePack(notes, materials)
-      const job = await waitForJob(job_id, (step) => setWriteState({ status: 'writing', step }))
+      const job = await waitForJob(job_id, (step) => update({ status: 'writing', step }))
       if (!job.pack) throw new ApiError('Lucy could not write your study pack.')
-      setWriteState({ status: 'done', pack: job.pack })
+      update({ status: 'done', pack: job.pack })
     } catch (error) {
-      setWriteState({ status: 'error', message: messageOf(error) })
+      update({ status: 'error', message: messageOf(error) })
     }
   }
 
@@ -99,7 +115,14 @@ export default function App() {
           <PrivacyNotice />
 
           <div className="grid gap-6 lg:grid-cols-5">
-            <NotesEditor value={notes} onChange={setNotes} className="lg:col-span-3" />
+            <NotesEditor
+              value={notes}
+              onChange={(value) => {
+                setNotes(value)
+                clearWriteError()
+              }}
+              className="lg:col-span-3"
+            />
             <motion.div variants={stagger} className="flex flex-col gap-6 lg:col-span-2">
               <Recorder recording={recording} onChange={setRecording} onLiveChange={setRecordingLive} />
               <SlideDropZone
@@ -111,7 +134,16 @@ export default function App() {
           </div>
 
           {showPanel && sendState.status === 'ready' && draft && (
-            <MaterialsPanel heard={sendState.materials} draft={draft} onChange={setDraft} onClose={closeMaterials} />
+            <MaterialsPanel
+              heard={sendState.materials}
+              draft={draft}
+              locked={writeState.status === 'writing'}
+              onChange={(next) => {
+                setDraft(next)
+                clearWriteError()
+              }}
+              onClose={closeMaterials}
+            />
           )}
 
           {writeState.status === 'done' && <PackView pack={writeState.pack} />}

@@ -156,9 +156,13 @@ def write(job_id: str, request: PackRequest) -> None:
 def _fail(job_id: str, error: Exception, fallback: str) -> None:
     if isinstance(error, providers.ProviderError):
         # For the operator: what kind of failure, never the student's material.
+        # The error code is safe to log; the response body is not (it can echo the student's material).
         cause = error.__cause__
+        while isinstance(cause, providers.ProviderError) and cause.__cause__ is not None:
+            cause = cause.__cause__
         status = getattr(cause, 'status_code', '-')
-        log.warning('Job %s: provider failed (%s, status %s)', job_id, type(cause).__name__, status)
+        code = getattr(cause, 'code', '-')
+        log.warning('Job %s: provider failed (%s, status %s, code %s)', job_id, type(cause).__name__, status, code)
         _update(job_id, status='failed', step='Failed', error=str(error))
     else:
         log.error('Job %s failed', job_id, exc_info=error)

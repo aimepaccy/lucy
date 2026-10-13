@@ -25,7 +25,12 @@ app.include_router(router)
 
 # The middleware added last runs first. CORS goes outermost so that even a 413 from
 # the size limit carries CORS headers, and the browser can show the real error.
-app.add_middleware(BodySizeLimit, max_bytes=settings.max_request_mb * 1024 * 1024)
+# Study pack requests are text only: 2 MB is far more than fits in one pack.
+app.add_middleware(
+    BodySizeLimit,
+    max_bytes=settings.max_request_mb * 1024 * 1024,
+    path_limits={'/api/packs': 2 * 1024 * 1024},
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.origins,

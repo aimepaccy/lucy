@@ -12,11 +12,13 @@ type MaterialsPanelProps = {
   // What Lucy heard and read, unchanged, and the student's corrected copy of it.
   heard: Materials
   draft: Materials
+  // While Lucy writes, the text is read-only: the pack is written from the text as it was when sent.
+  locked: boolean
   onChange: (draft: Materials) => void
   onClose: () => void
 }
 
-export function MaterialsPanel({ heard, draft, onChange, onClose }: MaterialsPanelProps) {
+export function MaterialsPanel({ heard, draft, locked, onChange, onClose }: MaterialsPanelProps) {
   const [confirmingClose, setConfirmingClose] = useState(false)
   const closeRef = useRef<HTMLButtonElement>(null)
   const confirmTextId = useId()
@@ -98,6 +100,7 @@ export function MaterialsPanel({ heard, draft, onChange, onClose }: MaterialsPan
                 original={heard.transcript ?? ''}
                 label="Recording transcript"
                 placeholder="No speech was heard."
+                locked={locked}
                 onChange={(text) => onChange({ ...draft, transcript: text })}
               />
             </section>
@@ -131,6 +134,7 @@ export function MaterialsPanel({ heard, draft, onChange, onClose }: MaterialsPan
                     original={heard.slides[index]?.text ?? ''}
                     label={label}
                     placeholder="No text found."
+                    locked={locked}
                     onChange={(text) => setSlideText(index, text)}
                   />
                 </div>
@@ -148,11 +152,12 @@ type EditableTextProps = {
   original: string
   label: string
   placeholder?: string
+  locked: boolean
   onChange: (text: string) => void
 }
 
 // Controlled: the box shows `value` and sends every change up.
-function EditableText({ value, original, label, placeholder, onChange }: EditableTextProps) {
+function EditableText({ value, original, label, placeholder, locked, onChange }: EditableTextProps) {
   const boxRef = useRef<HTMLTextAreaElement>(null)
 
   // The undo button disappears once used, so focus goes back to the text.
@@ -169,9 +174,10 @@ function EditableText({ value, original, label, placeholder, onChange }: Editabl
         onChange={(event) => onChange(event.target.value)}
         aria-label={label}
         placeholder={placeholder}
+        readOnly={locked}
         className="max-h-80 min-h-32 resize-y overflow-y-auto bg-background/60 leading-relaxed"
       />
-      {value !== original && (
+      {value !== original && !locked && (
         <button
           type="button"
           onClick={undo}

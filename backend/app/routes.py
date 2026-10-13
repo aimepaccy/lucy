@@ -44,6 +44,7 @@ def limits() -> Limits:
         max_slide_mb=MAX_SLIDE_MB,
         max_audio_mb=MAX_AUDIO_MB,
         max_notes_chars=MAX_NOTES_CHARS,
+        max_pack_words=generate.allowed_words(),
     )
 
 
@@ -111,11 +112,21 @@ def write_pack(request: PackRequest, background: BackgroundTasks) -> PackJobCrea
     try:
         generate.check_budget(material)
     except generate.MaterialTooLong as error:
+        present = [
+            name
+            for name, there in (
+                ('your notes', request.notes.strip()),
+                ('the transcript', request.transcript and request.transcript.strip()),
+                ('the slide text', any(slide.text.strip() for slide in request.slides)),
+            )
+            if there
+        ]
+        advice = present[0] if len(present) == 1 else ', '.join(present[:-1]) + ' or ' + present[-1]
         raise HTTPException(
             status_code=413,
             detail=(
                 f'Your material is about {error.words:,} words, and Lucy can write from about '
-                f'{error.allowed_words:,} at a time. Shorten the transcript or leave out a slide file.'
+                f'{error.allowed_words:,} at a time. Shorten {advice}.'
             ),
         ) from error
     job_id = jobs.create()

@@ -10,8 +10,11 @@ const LETTERS = ['A', 'B', 'C', 'D', 'E'] as const
 export function PackView({ pack }: { pack: StudyPack }) {
   const headingRef = useRef<HTMLDivElement>(null)
 
-  // Bring the new pack into view, and tell screen reader users it has arrived.
-  useEffect(() => headingRef.current?.focus(), [pack])
+  // Bring the new pack into view and tell screen reader users it has arrived, unless the student is typing.
+  useEffect(() => {
+    const active = document.activeElement
+    if (!(active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement)) headingRef.current?.focus()
+  }, [pack])
 
   return (
     <motion.div initial="hidden" animate="show">
@@ -21,13 +24,15 @@ export function PackView({ pack }: { pack: StudyPack }) {
         description="Your study pack, written by AI from your session. Check it against trusted sources."
       >
         <div ref={headingRef} tabIndex={-1} aria-label={`Study pack: ${pack.title}`} className="flex flex-col gap-6 outline-none">
-          <Section title="Key teaching points">
-            <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm leading-relaxed">
-              {pack.summary.map((point, index) => (
-                <li key={index}>{point}</li>
-              ))}
-            </ul>
-          </Section>
+          {pack.summary.length > 0 && (
+            <Section title="Key teaching points">
+              <ul className="flex list-disc flex-col gap-1.5 pl-5 text-sm leading-relaxed">
+                {pack.summary.map((point, index) => (
+                  <li key={index}>{point}</li>
+                ))}
+              </ul>
+            </Section>
+          )}
 
           {pack.flashcards.length > 0 && (
             <Section title="Flashcards">
@@ -83,9 +88,9 @@ export function PackView({ pack }: { pack: StudyPack }) {
           {pack.search_terms.length > 0 && (
             <Section title="Search terms for further reading">
               <div className="flex flex-wrap gap-2">
-                {pack.search_terms.map((term) => (
+                {pack.search_terms.map((term, index) => (
                   <span
-                    key={term}
+                    key={index}
                     className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
                   >
                     <Search className="size-3.5" aria-hidden="true" />
