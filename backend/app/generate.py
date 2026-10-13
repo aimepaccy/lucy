@@ -32,10 +32,11 @@ MIN_PIECE_WORDS = 3
 # Pieces of a "..." quote must come in order and close together, or they could join unrelated passages.
 MAX_GAP_WORDS = 40
 MAX_OVERVIEW, MAX_SUMMARY, MAX_FLASHCARDS, MAX_QUESTIONS, MAX_SEARCH_TERMS = 4, 10, 10, 5, 6
-# Coverage: the material is cut into passages of at least this many words, and passages shorter than
-# the second number ("Right, let's move on") are not worth reporting as left out.
+# Coverage: the material is cut into passages of about 40 to 80 words. A tail shorter than the last
+# number ("Right, let's move on") joins the passage before it rather than standing alone.
 PASSAGE_WORDS = 40
-MIN_REPORTED_WORDS = 12
+MAX_PASSAGE_WORDS = 2 * PASSAGE_WORDS
+MIN_TAIL_WORDS = 12
 LETTERS = 'ABCDE'
 
 INSTRUCTIONS = """You write study packs for medical students from their own teaching session.
@@ -129,20 +130,31 @@ def _words(text: str) -> list[str]:
     return re.sub(rf'[^\w{_SYMBOLS}]+', ' ', text).split()
 
 
-def is_grounded(quote: str, material: str) -> bool:
-    """True if the quote is really in the material. A quote with "..." is checked piece by piece, in order."""
-    pieces = [_words(piece) for piece in re.split(r'\.\.\.|…', quote)]
-    pieces = [piece for piece in pieces if piece]
+def _pieces(quote: str) -> list[list[str]]:
+    # A quote with "..." in it is several pieces of the material.
+    return [words for words in (_words(piece) for piece in re.split(r'\.\.\.|\u2026', quote)) if words]
+
+
+def _locate(quote: str, source: list[str]) -> list[tuple[int, int]] | None:
+    """Where the quote is in the source words: one (start, end) span per piece, or None if not found.
+    Pieces must come in order and close together. Grounding and coverage both use this one answer."""
+    pieces = _pieces(quote)
     if sum(len(piece) for piece in pieces) < MIN_QUOTE_WORDS or any(len(piece) < MIN_PIECE_WORDS for piece in pieces):
-        return False
-    source = _words(material)
+        return None
+    spans = []
     position = None
     for piece in pieces:
         found = _find(source, piece, start=position or 0)
         if found is None or (position is not None and found - position > MAX_GAP_WORDS):
-            return False
+            return None
         position = found + len(piece)
-    return True
+        spans.append((found, position))
+    return spans
+
+
+def is_grounded(quote: str, material: str) -> bool:
+    """True if the quote is really in the material."""
+    return _locate(quote, _words(material)) is not None
 
 
 def _find(words: list[str], piece: list[str], start: int) -> int | None:
@@ -164,22 +176,55 @@ def _shuffled(question) -> tuple[list[Option], str]:
     return options, LETTERS[options.index(correct)]
 
 
+# A sentence ends at . ! or ? followed by a space, but not after a few common abbreviations.
+_SENTENCE_END = re.compile(r'(?<!\be\.g\.)(?<!\bi\.e\.)(?<!\bDr\.)(?<!\bvs\.)(?<=[.!?])\s+')
+
+
+def _count(units: list[tuple[str, bool]]) -> int:
+    return sum(len(text.split()) for text, _ in units)
+
+
+def _join(units: list[tuple[str, bool]]) -> str:
+    # Units that began a new line keep their line break, so bulleted notes stay readable.
+    return ''.join(('\n' if new_line and i else ' ' if i else '') + text for i, (text, new_line) in enumerate(units))
+
+
 def passages(request: PackRequest) -> list[str]:
-    """The material cut into passages of a paragraph or so, in order. Sentences, not lines, are the
-    building blocks: a Whisper transcript is one long line."""
+    """The material cut into passages of about 40 to 80 words, in order, never across two sources.
+
+    Sentences are the building blocks, because a Whisper transcript is one long line. A sentence too
+    long for one passage (fast speech with little punctuation) is cut into pieces, so one quote can
+    never mark a whole session as covered. A short tail joins the passage before it.
+    """
     result = []
     for text in (request.notes, request.transcript or '', *(slide.text for slide in request.slides)):
-        current: list[str] = []
+        units: list[tuple[str, bool]] = []
         for line in _untag(text).splitlines():
-            for sentence in re.split(r'(?<=[.!?])\s+', line.strip()):
-                if not sentence:
-                    continue
-                current.append(sentence)
-                if sum(len(part.split()) for part in current) >= PASSAGE_WORDS:
-                    result.append(' '.join(current))
-                    current = []
+            first = True
+            for sentence in _SENTENCE_END.split(line.strip()):
+                words = sentence.split()
+                while words:
+                    size = PASSAGE_WORDS if len(words) > MAX_PASSAGE_WORDS else len(words)
+                    units.append((' '.join(words[:size]), first))
+                    words = words[size:]
+                    first = False
+
+        part: list[list[tuple[str, bool]]] = []
+        current: list[tuple[str, bool]] = []
+        for unit in units:
+            if current and _count(current) + len(unit[0].split()) > MAX_PASSAGE_WORDS:
+                part.append(current)
+                current = []
+            current.append(unit)
+            if _count(current) >= PASSAGE_WORDS:
+                part.append(current)
+                current = []
         if current:
-            result.append(' '.join(current))
+            if part and _count(current) < MIN_TAIL_WORDS:
+                part[-1] = part[-1] + current
+            else:
+                part.append(current)
+        result.extend(_join(units) for units in part)
     return result
 
 
@@ -187,7 +232,8 @@ def uncovered(request: PackRequest, quotes: list[str]) -> tuple[list[str], int]:
     """Passages that no quote in the pack comes from, and the number of passages in all.
 
     The AI can leave a topic out without saying so. Every item carries a quote, so Lucy can show the
-    student which parts of the session the pack does not draw on, for them to read themselves.
+    student which parts of the session the pack does not quote, for them to read themselves. Only the
+    place each quote was actually found counts: when in doubt, a passage is shown, not hidden.
     """
     parts = passages(request)
     source: list[str] = []
@@ -199,18 +245,10 @@ def uncovered(request: PackRequest, quotes: list[str]) -> tuple[list[str], int]:
 
     used = set()
     for quote in quotes:
-        for piece in re.split(r'\.\.\.|\u2026', quote):
-            words = _words(piece)
-            if len(words) < MIN_PIECE_WORDS:
-                continue
-            position = _find(source, words, 0)
-            while position is not None:
-                end = position + len(words)
-                used.update(i for i, (first, last) in enumerate(ranges) if first < end and position < last)
-                position = _find(source, words, position + 1)
+        for first, last in _locate(quote, source) or []:
+            used.update(i for i, (start, end) in enumerate(ranges) if start < last and first < end)
 
-    left_out = [part for i, part in enumerate(parts) if i not in used and len(part.split()) >= MIN_REPORTED_WORDS]
-    return left_out, len(parts)
+    return [part for i, part in enumerate(parts) if i not in used], len(parts)
 
 
 def check(draft: PackDraft, material: str, request: PackRequest) -> StudyPack:

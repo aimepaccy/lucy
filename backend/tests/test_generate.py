@@ -230,7 +230,7 @@ def real_write_json(monkeypatch, effort='low', error=None):
     monkeypatch.setattr(providers.openai, 'OpenAI', FakeOpenAI)
     FakeOpenAI.error = error
     try:
-        return REAL_WRITE_JSON('Instructions', '<material>x</material>', PackDraft, 3500)
+        return REAL_WRITE_JSON('Instructions', '<material>x</material>', PackDraft, generate.OUTPUT_TOKENS)
     finally:
         generate.get_settings.cache_clear()
 
@@ -296,16 +296,16 @@ SESSION = (
 
 def test_passages_split_a_one_line_transcript_by_sentences():
     parts = generate.passages(PackRequest(transcript=SESSION))
-    assert len(parts) == 3
+    assert len(parts) == 2
     assert parts[0].startswith('Acute severe asthma') and parts[1].startswith('Never give a sedative')
-    assert parts[2] == 'Right, let us move on to the next patient.'
+    # The short closing line joins the passage before it rather than standing alone.
+    assert parts[1].endswith('Right, let us move on to the next patient.')
 
 
-def test_coverage_reports_passages_the_pack_does_not_use():
+def test_coverage_reports_passages_the_pack_does_not_quote():
     request = PackRequest(transcript=SESSION)
     left_out, total = generate.uncovered(request, ['a peak flow between 33 and 50 percent of best'])
-    assert total == 3
-    # The sedation passage is left out and reported; the short closing line is not worth reporting.
+    assert total == 2
     assert len(left_out) == 1 and left_out[0].startswith('Never give a sedative')
 
 
@@ -321,5 +321,45 @@ def test_only_grounded_quotes_count_for_coverage(fake_writer):
     fake_writer['answers'].append(json.dumps(fake_pack(summary=[invented], flashcards=[], questions=[])))
     pack = write(transcript=SESSION)['pack']
     assert pack['summary'][0]['grounded'] is False
-    assert pack['passage_count'] == 3
-    assert len(pack['uncovered']) == 2  # an invented quote covers nothing
+    # Nothing is quoted, so every passage is reported, and the count shown is right: 0 of 2 used.
+    assert pack['passage_count'] == 2
+    assert len(pack['uncovered']) == 2
+
+
+def test_unpunctuated_transcript_is_still_cut_into_passages():
+    # Fast speech can come back from Whisper with hardly any full stops.
+    words = ' '.join(f'word{i}' for i in range(800))
+    parts = generate.passages(PackRequest(transcript=words))
+    assert len(parts) == 19
+    assert max(len(part.split()) for part in parts) <= generate.MAX_PASSAGE_WORDS
+    # So one quote covers one passage, not the whole session.
+    left_out, total = generate.uncovered(PackRequest(transcript=words), ['word0 word1 word2 word3 word4 word5'])
+    assert total == 19 and len(left_out) == 18
+
+
+def test_a_repeated_phrase_covers_only_where_the_quote_was_found():
+    first = 'Check inhaler technique before stepping up treatment in every patient on the ward. ' * 4
+    second = 'Later, check inhaler technique before stepping up treatment, and also review adherence. ' * 4
+    request = PackRequest(notes=first, transcript=second)
+    left_out, total = generate.uncovered(request, ['check inhaler technique before stepping up treatment'])
+    assert total == 2
+    assert len(left_out) == 1 and left_out[0].startswith('Later')
+
+
+def test_short_notes_are_reported_when_not_quoted():
+    request = PackRequest(notes='Pred 40 mg for 5 days. No sedation.', transcript=SESSION)
+    left_out, total = generate.uncovered(request, ['a peak flow between 33 and 50 percent of best'])
+    assert 'Pred 40 mg for 5 days. No sedation.' in left_out
+
+
+def test_passages_never_join_two_sources_and_keep_line_breaks():
+    request = PackRequest(notes='CURB-65 for pneumonia.\nAlways check inhaler technique.', transcript=SESSION)
+    parts = generate.passages(request)
+    assert parts[0] == 'CURB-65 for pneumonia.\nAlways check inhaler technique.'
+    assert parts[1].startswith('Acute severe asthma')
+
+
+def test_abbreviations_do_not_end_a_sentence():
+    text = 'Give a reliever, e.g. salbutamol, and review. ' + 'Then reassess the patient carefully. ' * 8
+    first = generate.passages(PackRequest(notes=text))[0]
+    assert 'e.g. salbutamol' in first

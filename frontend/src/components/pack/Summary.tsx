@@ -5,8 +5,6 @@ import { plural } from '@/lib/format'
 import type { StudyPack } from '@/types'
 
 export function Summary({ pack }: { pack: StudyPack }) {
-  const used = pack.passage_count - pack.uncovered.length
-
   return (
     <div className="flex flex-col gap-6">
       {pack.overview.length > 0 && (
@@ -14,7 +12,8 @@ export function Summary({ pack }: { pack: StudyPack }) {
           <h3 className="text-sm font-semibold">Overview</h3>
           {/* Prose has no quotes, so it cannot be checked word for word; the label says so. */}
           <p className="text-xs text-muted-foreground">
-            AI summary, not checked word for word. The teaching points below are.
+            Written by AI from your session. Lucy cannot check it against your material; each teaching point below
+            shows the quote it comes from.
           </p>
           <div className="flex flex-col gap-3 text-sm leading-relaxed">
             {pack.overview.map((paragraph, index) => (
@@ -47,37 +46,33 @@ export function Summary({ pack }: { pack: StudyPack }) {
         </ul>
       </section>
 
-      {/* Coverage: the parts of the session no item in the pack draws on, for the student to read themselves. */}
+      {/* Coverage: the parts of the session no item in the pack quotes, for the student to read themselves. */}
       {pack.passage_count > 0 && (
         <section className="flex flex-col gap-2">
           {pack.uncovered.length === 0 ? (
             <p className="flex items-start gap-2 rounded-lg border bg-background/50 p-3 text-sm">
               <CircleCheck className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden="true" />
-              The pack draws on every part of your material ({plural(pack.passage_count, 'passage')}).
+              Every part of your material is quoted at least once in the pack ({plural(pack.passage_count, 'passage')}).
             </p>
           ) : (
-            <details className="group rounded-lg border border-warning/30 bg-warning/10" open>
-              <summary className="flex cursor-pointer list-none items-start gap-2 rounded-lg p-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40 [&::-webkit-details-marker]:hidden">
+            <div className="flex flex-col gap-2 rounded-lg border border-warning/30 bg-warning/10 p-3">
+              <h3 className="flex items-start gap-2 text-sm font-medium">
                 <Eye className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
-                <span>
-                  <span className="font-medium">
-                    Parts of your session the pack does not use ({pack.uncovered.length} of {pack.passage_count})
-                  </span>
-                  <span className="block text-muted-foreground">
-                    The pack draws on {used} of {plural(pack.passage_count, 'passage')}. Read these yourself: they may
-                    matter.
-                  </span>
-                </span>
-              </summary>
-              <ul className="flex flex-col gap-2 px-3 pb-3">
+                Parts of your session the pack does not quote ({pack.uncovered.length} of {pack.passage_count})
+              </h3>
+              <p className="text-sm text-muted-foreground">Read these yourself: they may hold teaching the pack leaves out.</p>
+              <ul className="flex flex-col gap-2">
                 {pack.uncovered.map((passage, index) => (
-                  <li key={index} className="rounded-md border bg-background/70 p-3 text-sm leading-relaxed">
+                  <li key={index} className="rounded-md border bg-background/70 p-3 text-sm leading-relaxed whitespace-pre-line">
                     {passage}
                   </li>
                 ))}
               </ul>
-            </details>
+            </div>
           )}
+          <p className="text-xs text-muted-foreground">
+            A rough check: a quoted passage can still hold points the pack leaves out.
+          </p>
         </section>
       )}
 
