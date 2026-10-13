@@ -2,10 +2,10 @@ import shutil
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Query, UploadFile
 from fastapi import Path as PathParam
 
-from app import generate, jobs
+from app import generate, jobs, reading
 from app.files import (
     MAX_AUDIO_BYTES,
     MAX_AUDIO_MB,
@@ -25,6 +25,7 @@ from app.schemas import (
     Limits,
     PackJobCreated,
     PackRequest,
+    Reading,
     SessionReceipt,
     SlideReceipt,
 )
@@ -133,6 +134,16 @@ def write_pack(request: PackRequest, background: BackgroundTasks) -> PackJobCrea
     job_id = jobs.create()
     background.add_task(jobs.write, job_id, request)
     return PackJobCreated(job_id=job_id)
+
+
+# A GET, because it only reads: nothing changes on the server, and the same term always means the same request.
+# It is `async` because it spends its time waiting on other services, and while it waits the server serves others.
+@router.get('/reading')
+async def further_reading(term: Annotated[str, Query(max_length=reading.MAX_TERM_CHARS)]) -> Reading:
+    cleaned = reading.clean_term(term)
+    if len(cleaned) < 2:
+        raise HTTPException(status_code=422, detail='Give a search term of at least two letters.')
+    return await reading.find(cleaned)
 
 
 @router.get('/jobs/{job_id}')

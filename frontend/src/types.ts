@@ -72,6 +72,23 @@ export type StudyPack = {
   model: string
 }
 
+// Further reading: links found by real services for one search term. The AI never writes them.
+export type ReadingLink = { title: string; url: string; detail: string }
+
+export type ReadingSource = {
+  key: string
+  name: string
+  // One line on what the source is, such as which YouTube channels Lucy searches.
+  about: string
+  // 'search' is a single link to the service's own search page, for services without a free API.
+  kind: 'results' | 'search'
+  status: 'ok' | 'failed' | 'off'
+  links: ReadingLink[]
+  note: string | null
+}
+
+export type Reading = { term: string; sources: ReadingSource[] }
+
 export type JobState = {
   status: 'queued' | 'working' | 'done' | 'failed'
   step: string

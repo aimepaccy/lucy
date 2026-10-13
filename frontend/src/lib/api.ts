@@ -1,4 +1,4 @@
-import type { JobCreated, JobState, Limits, Materials, Recording, SlideFile } from '@/types'
+import type { JobCreated, JobState, Limits, Materials, Reading, Recording, SlideFile } from '@/types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 // Long enough for a full set of slides on slow Wi-Fi.
@@ -6,6 +6,8 @@ const UPLOAD_TIMEOUT_MS = 5 * 60_000
 const CHECK_TIMEOUT_MS = 15_000
 const POLL_EVERY_MS = 1500
 const JOB_TIMEOUT_MS = 10 * 60_000
+// The server gives each reading source 12 seconds; a little more covers the trip there and back.
+const READING_TIMEOUT_MS = 20_000
 
 export class ApiError extends Error {
   status: number | null
@@ -16,14 +18,14 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init: RequestInit, timeoutMs: number): Promise<T> {
+const SLOW_UPLOAD = 'Lucy took too long to answer. Check your connection, or send fewer or smaller files.'
+
+async function request<T>(path: string, init: RequestInit, timeoutMs: number, slowMessage = SLOW_UPLOAD): Promise<T> {
   let response: Response
   try {
     response = await fetch(`${API_URL}${path}`, { ...init, signal: AbortSignal.timeout(timeoutMs) })
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'TimeoutError') {
-      throw new ApiError('Lucy took too long to answer. Check your connection, or send fewer or smaller files.')
-    }
+    if (error instanceof DOMException && error.name === 'TimeoutError') throw new ApiError(slowMessage)
     throw new ApiError('Lucy could not reach its server. Check that it is running, then try again.')
   }
 
@@ -54,6 +56,12 @@ export function writePack(notes: string, materials: Materials): Promise<{ job_id
     slides: materials.slides.map((slide) => ({ text: slide.text })),
   })
   return request('/api/packs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }, CHECK_TIMEOUT_MS)
+}
+
+// A GET with the term in the address: the server only looks things up, nothing is stored or changed.
+export function findReading(term: string): Promise<Reading> {
+  const slow = 'Lucy took too long to find reading for this term. Please try again.'
+  return request<Reading>(`/api/reading?term=${encodeURIComponent(term)}`, {}, READING_TIMEOUT_MS, slow)
 }
 
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))

@@ -2,15 +2,15 @@
 
 Lucy turns clinical teaching into a study pack. Record a teaching conversation, type your notes, add the slides, and Lucy gives you a summary, flashcards, an exam-style quiz, a chat about the session, and further reading from credible sources.
 
-**Status:** early development (phase 3 of the plan in `docs/plan.md`). Lucy records or accepts audio, transcribes it with Whisper, reads the text of PDF and PowerPoint slides, and shows what it heard and read. Study pack generation is not connected yet.
+**Status:** early development (phase 6 of the plan in `docs/plan.md`). Lucy records or accepts audio, transcribes it with Whisper, reads PDF and PowerPoint slides, lets you correct what it heard and read, and writes a study pack: an overview, checked teaching points, flashcards, a quiz, and further reading. Saved history, the chat and feedback come next.
 
 > Lucy is for teaching material only: role-played rounds, lectures, and your own notes. Do not upload anything that could identify a patient.
 
-## How it will work
+## How it works
 - **Front end:** React, Tailwind CSS, shadcn/ui, Motion
 - **Back end:** Python, FastAPI
 - **AI:** any OpenAI-compatible provider (Groq by default), set in configuration
-- **Further reading:** links come from PubMed/StatPearls, curated YouTube channels, Wikipedia and Radiopaedia, never written by the AI
+- **Further reading:** links come from PubMed, StatPearls, Wikipedia, five teaching channels on YouTube, and the search pages of Radiopaedia and MSD Manuals. The AI only suggests search terms; it never writes links.
 
 ## Running it locally
 Run the back end and the front end in two terminals.
@@ -24,7 +24,7 @@ pip install -r requirements-lock.txt
 copy .env.example .env
 uvicorn app.main:app --reload --port 8000
 ```
-Before starting the server, put your AI provider key in `.env` as `LLM_API_KEY`. The API answers at http://localhost:8000, with interactive documentation at http://localhost:8000/docs. Run the tests with `pytest`.
+Before starting the server, put your AI provider key in `.env` as `LLM_API_KEY`. Two keys are optional: `YOUTUBE_API_KEY` (a free YouTube Data API v3 key; without it, videos are left out) and `NCBI_API_KEY` (faster PubMed and StatPearls lookups). The API answers at http://localhost:8000, with interactive documentation at http://localhost:8000/docs. Run the tests with `pytest`.
 
 Front end (needs Node 24):
 ```

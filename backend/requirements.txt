@@ -5,3 +5,4 @@ pydantic-settings
 openai
 pypdf
 python-pptx
+httpx2

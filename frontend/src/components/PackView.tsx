@@ -1,15 +1,28 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
-import { BookOpenCheck, Layers, ListChecks, NotebookText } from 'lucide-react'
+import { BookOpenCheck, Layers, Library, ListChecks, NotebookText } from 'lucide-react'
 import { Tabs } from 'radix-ui'
 import { Panel } from '@/components/Panel'
 import { Flashcards } from '@/components/pack/Flashcards'
+import { FurtherReading } from '@/components/pack/FurtherReading'
 import { Quiz } from '@/components/pack/Quiz'
 import { Summary } from '@/components/pack/Summary'
+import { useReading } from '@/hooks/use-reading'
 import type { StudyPack } from '@/types'
 
 export function PackView({ pack }: { pack: StudyPack }) {
   const startRef = useRef<HTMLDivElement>(null)
+  const [tab, setTab] = useState('summary')
+  const reading = useReading()
+
+  // Opening Further reading for the first time looks up the first term. Starting it from the click,
+  // not from an effect, means nothing is fetched for a tab that is never opened.
+  function openTab(value: string) {
+    setTab(value)
+    if (value === 'reading' && reading.chosen === null && pack.search_terms.length > 0) {
+      reading.choose(pack.search_terms[0])
+    }
+  }
 
   // Bring the new pack into view and tell screen reader users it has arrived, unless the student is typing.
   useEffect(() => {
@@ -21,6 +34,7 @@ export function PackView({ pack }: { pack: StudyPack }) {
     { value: 'summary', label: 'Summary', icon: NotebookText, count: null },
     { value: 'cards', label: 'Flashcards', icon: Layers, count: pack.flashcards.length },
     { value: 'quiz', label: 'Quiz', icon: ListChecks, count: pack.questions.length },
+    { value: 'reading', label: 'Reading', icon: Library, count: pack.search_terms.length },
   ]
 
   return (
@@ -32,7 +46,7 @@ export function PackView({ pack }: { pack: StudyPack }) {
       >
         <div ref={startRef} tabIndex={-1} role="region" aria-label={`Study pack: ${pack.title}`} className="outline-none">
           {/* Radix gives the tabs their roles and arrow-key movement; we only style them. */}
-          <Tabs.Root defaultValue="summary" className="flex flex-col gap-5">
+          <Tabs.Root value={tab} onValueChange={openTab} className="flex flex-col gap-5">
             <Tabs.List aria-label="Parts of the study pack" className="flex gap-1 rounded-lg bg-muted p-1">
               {tabs.map(({ value, label, icon: Icon, count }) => (
                 <Tabs.Trigger
@@ -41,10 +55,10 @@ export function PackView({ pack }: { pack: StudyPack }) {
                   disabled={count === 0}
                   className="flex min-w-0 flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-sm sm:gap-2 sm:px-3 font-medium text-muted-foreground transition-colors outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm"
                 >
-                  {/* No icons on phones: three labels already fill the row. */}
+                  {/* No icons or counts on phones: four labels already fill the row. */}
                   <Icon className="hidden size-4 sm:block" aria-hidden="true" />
                   {label}
-                  {count !== null && <span className="text-xs text-muted-foreground tabular-nums">{count}</span>}
+                  {count !== null && <span className="hidden text-xs text-muted-foreground tabular-nums sm:inline">{count}</span>}
                 </Tabs.Trigger>
               ))}
             </Tabs.List>
@@ -64,6 +78,17 @@ export function PackView({ pack }: { pack: StudyPack }) {
             {pack.questions.length > 0 && (
               <Tabs.Content value="quiz" forceMount className="outline-none data-[state=inactive]:hidden">
                 <Quiz questions={pack.questions} />
+              </Tabs.Content>
+            )}
+
+            {pack.search_terms.length > 0 && (
+              <Tabs.Content value="reading" forceMount className="outline-none data-[state=inactive]:hidden">
+                <FurtherReading
+                  terms={pack.search_terms}
+                  chosen={reading.chosen}
+                  lookup={reading.lookup}
+                  onChoose={reading.choose}
+                />
               </Tabs.Content>
             )}
           </Tabs.Root>

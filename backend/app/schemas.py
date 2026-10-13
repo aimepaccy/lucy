@@ -142,6 +142,31 @@ class JobState(BaseModel):
     error: str | None = None
 
 
+class ReadingLink(BaseModel):
+    title: str
+    url: str
+    # A short line under the title, such as the journal and year, or the channel.
+    detail: str = ''
+
+
+class ReadingSource(BaseModel):
+    key: str
+    name: str
+    # One line on what the source is, shown under its name.
+    about: str
+    # 'results' lists what the service found; 'search' is one link to the service's own search page.
+    kind: Literal['results', 'search']
+    # 'off' means the source is not set up on this server (for example, no YouTube key).
+    status: Literal['ok', 'failed', 'off']
+    links: list[ReadingLink] = []
+    note: str | None = None
+
+
+class Reading(BaseModel):
+    term: str
+    sources: list[ReadingSource]
+
+
 class Limits(BaseModel):
     max_slide_files: int
     max_slide_mb: int

@@ -167,6 +167,13 @@ def test_links_are_removed_and_never_become_search_terms(fake_writer):
     assert result['search_terms'] == ['acute asthma']
 
 
+def test_search_terms_are_ones_further_reading_can_look_up(fake_writer):
+    pack = fake_pack(search_terms=['Acute asthma', 'acute asthma ', '?!', 'x' * 121, 'peak flow'])
+    fake_writer['answers'].append(json.dumps(pack))
+    # No repeats (in any capitals), nothing the reading route would refuse.
+    assert write(notes=FAKE_NOTES)['pack']['search_terms'] == ['Acute asthma', 'peak flow']
+
+
 def test_pack_without_teaching_points_is_tried_again_then_refused(fake_writer):
     empty = json.dumps(fake_pack(summary=[{'text': ' ', 'quote': 'for five days in acute asthma'}]))
     fake_writer['answers'].extend([empty, empty])

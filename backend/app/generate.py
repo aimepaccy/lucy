@@ -7,7 +7,7 @@ import unicodedata
 
 from pydantic import ValidationError
 
-from app import providers
+from app import providers, reading
 from app.config import get_settings
 from app.schemas import CheckedFlashcard, CheckedPoint, CheckedQuestion, Option, PackDraft, PackRequest, StudyPack
 
@@ -52,7 +52,7 @@ missed it knows what was taught. Include everything the teacher stressed.
 - flashcards: at most 10.
 - questions: at most 5 single best answer questions, as in medical finals. Each has a short clinical \
 scenario, exactly five options with one best answer, and an explanation for every option.
-- search_terms: 3 to 6 search terms a student could use to read further.
+- search_terms: 3 to 6 short search terms for further reading, 1 to 4 words each, as a student would look them up in a textbook index. Each names one condition, drug, test or skill taught in this session (the style of "community-acquired pneumonia", "CURB-65" or "chest drain insertion").
 
 Rules:
 - Use only what the material teaches. If the material is short, write fewer items. Never pad with \
@@ -162,6 +162,21 @@ def _find(words: list[str], piece: list[str], start: int) -> int | None:
         if words[index : index + len(piece)] == piece:
             return index
     return None
+
+
+def _usable_terms(terms: list[str]) -> list[str]:
+    """Search terms Further reading can use: no links (dropped, not just hidden), no repeats, and none
+    the reading route would refuse, so every term the student sees can be looked up."""
+    usable, seen = [], set()
+    for term in terms:
+        term = term.strip()
+        key = term.casefold()
+        too_long = len(term) > reading.MAX_TERM_CHARS
+        if _LINK.search(term) or key in seen or too_long or len(reading.clean_term(term)) < 2:
+            continue
+        seen.add(key)
+        usable.append(term)
+    return usable[:MAX_SEARCH_TERMS]
 
 
 def _no_links(text: str) -> str:
@@ -291,8 +306,7 @@ def check(draft: PackDraft, material: str, request: PackRequest) -> StudyPack:
         summary=summary,
         flashcards=flashcards,
         questions=questions,
-        # Phase 6 builds searches from these, so anything that looks like a link is dropped, not just hidden.
-        search_terms=[term for term in draft.search_terms if term.strip() and not _LINK.search(term)][:MAX_SEARCH_TERMS],
+        search_terms=_usable_terms(draft.search_terms),
         uncovered=left_out,
         passage_count=passage_count,
         model=get_settings().llm_model,

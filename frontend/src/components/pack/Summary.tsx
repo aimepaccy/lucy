@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { CircleCheck, Eye, Search } from 'lucide-react'
+import { CircleCheck, Eye } from 'lucide-react'
 import { Source } from '@/components/pack/Source'
 import { plural } from '@/lib/format'
 import type { StudyPack } from '@/types'
@@ -74,23 +74,6 @@ export function Summary({ pack }: { pack: StudyPack }) {
           <p className="text-xs text-muted-foreground">
             A rough check: a quoted passage can still hold points the pack leaves out.
           </p>
-        </section>
-      )}
-
-      {pack.search_terms.length > 0 && (
-        <section className="flex flex-col gap-2">
-          <h3 className="text-sm font-semibold">Search terms for further reading</h3>
-          <div className="flex flex-wrap gap-2">
-            {pack.search_terms.map((term, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
-              >
-                <Search className="size-3.5" aria-hidden="true" />
-                {term}
-              </span>
-            ))}
-          </div>
         </section>
       )}
     </div>

@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     transcribe_api_key: SecretStr = SecretStr('')
     transcribe_model: str = 'whisper-large-v3-turbo'
 
+    # Further reading. Without a YouTube key the videos are left out; without an NCBI key
+    # PubMed and StatPearls still work, at 3 requests a second instead of 10.
+    youtube_api_key: SecretStr = SecretStr('')
+    ncbi_api_key: SecretStr = SecretStr('')
+
     @property
     def transcription_provider(self) -> tuple[str, str]:
         base_url = self.transcribe_base_url or self.llm_base_url
