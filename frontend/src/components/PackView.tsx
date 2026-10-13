@@ -1,10 +1,11 @@
 import { useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
-import { BookOpenCheck, Layers, ListChecks, NotebookText, Search } from 'lucide-react'
+import { BookOpenCheck, Layers, ListChecks, NotebookText } from 'lucide-react'
 import { Tabs } from 'radix-ui'
 import { Panel } from '@/components/Panel'
 import { Flashcards } from '@/components/pack/Flashcards'
 import { Quiz } from '@/components/pack/Quiz'
+import { Summary } from '@/components/pack/Summary'
 import type { StudyPack } from '@/types'
 
 export function PackView({ pack }: { pack: StudyPack }) {
@@ -48,45 +49,8 @@ export function PackView({ pack }: { pack: StudyPack }) {
               ))}
             </Tabs.List>
 
-            <Tabs.Content value="summary" className="flex flex-col gap-6 outline-none">
-              {pack.summary.length > 0 && (
-                <section className="flex flex-col gap-2">
-                  <h3 className="text-sm font-semibold">Key teaching points</h3>
-                  <ul className="flex flex-col gap-2">
-                    {pack.summary.map((point, index) => (
-                      <motion.li
-                        key={index}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.04 }}
-                        className="flex gap-3 rounded-lg border bg-background/50 p-3 text-sm leading-relaxed"
-                      >
-                        <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-full bg-accent text-[0.7rem] font-semibold text-accent-foreground">
-                          {index + 1}
-                        </span>
-                        {point}
-                      </motion.li>
-                    ))}
-                  </ul>
-                </section>
-              )}
-
-              {pack.search_terms.length > 0 && (
-                <section className="flex flex-col gap-2">
-                  <h3 className="text-sm font-semibold">Search terms for further reading</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {pack.search_terms.map((term, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground"
-                      >
-                        <Search className="size-3.5" aria-hidden="true" />
-                        {term}
-                      </span>
-                    ))}
-                  </div>
-                </section>
-              )}
+            <Tabs.Content value="summary" className="outline-none">
+              <Summary pack={pack} />
             </Tabs.Content>
 
             {/* Kept mounted while hidden, so switching tabs does not lose the place in the cards or the quiz.

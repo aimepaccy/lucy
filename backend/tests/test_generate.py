@@ -158,17 +158,17 @@ def test_quote_pieces_must_be_in_order_and_close():
 
 def test_links_are_removed_and_never_become_search_terms(fake_writer):
     pack = fake_pack(
-        summary=['See https://example.org/asthma for more.'],
+        summary=[{'text': 'See https://example.org/asthma for more.', 'quote': 'for five days in acute asthma'}],
         search_terms=['acute asthma', 'www.example.com', 'doi: 10.1000/xyz123'],
     )
     fake_writer['answers'].append(json.dumps(pack))
     result = write(notes=FAKE_NOTES)['pack']
-    assert result['summary'] == ['See [link removed] for more.']
+    assert result['summary'][0]['text'] == 'See [link removed] for more.'
     assert result['search_terms'] == ['acute asthma']
 
 
 def test_pack_without_teaching_points_is_tried_again_then_refused(fake_writer):
-    empty = json.dumps(fake_pack(summary=[' ']))
+    empty = json.dumps(fake_pack(summary=[{'text': ' ', 'quote': 'for five days in acute asthma'}]))
     fake_writer['answers'].extend([empty, empty])
     state = write(notes=FAKE_NOTES)
     assert state['status'] == 'failed'
@@ -274,3 +274,52 @@ def test_text_at_the_shown_limit_is_never_refused():
     body = {'notes': 'a' * size, 'transcript': 'b' * size, 'slides': [{'text': 'c' * size} for _ in range(5)]}
     assert client.post('/api/packs', json=body).status_code == 202
 
+
+def test_teaching_points_and_overview_are_returned_and_checked():
+    pack = write(notes=FAKE_NOTES)['pack']
+    assert pack['overview'] == ['The session covered oral steroids in acute asthma.']
+    assert pack['summary'] == [
+        {'text': 'Oral steroids for five days.', 'quote': 'for five days in acute asthma', 'grounded': True}
+    ]
+
+
+SESSION = (
+    'Acute severe asthma means a peak flow between 33 and 50 percent of best, a respiratory rate of 25 or '
+    'more, a heart rate of 110 or more, or being unable to complete sentences in one breath. '
+    'This is the classification the consultant wants every student to know by heart. '
+    'Never give a sedative on the ward, because anxiety in acute asthma is a sign of hypoxia until proven '
+    'otherwise, and sedation can stop a tired and exhausted patient from breathing at all, which is how '
+    'patients die quietly overnight. '
+    'Right, let us move on to the next patient.'
+)
+
+
+def test_passages_split_a_one_line_transcript_by_sentences():
+    parts = generate.passages(PackRequest(transcript=SESSION))
+    assert len(parts) == 3
+    assert parts[0].startswith('Acute severe asthma') and parts[1].startswith('Never give a sedative')
+    assert parts[2] == 'Right, let us move on to the next patient.'
+
+
+def test_coverage_reports_passages_the_pack_does_not_use():
+    request = PackRequest(transcript=SESSION)
+    left_out, total = generate.uncovered(request, ['a peak flow between 33 and 50 percent of best'])
+    assert total == 3
+    # The sedation passage is left out and reported; the short closing line is not worth reporting.
+    assert len(left_out) == 1 and left_out[0].startswith('Never give a sedative')
+
+
+def test_quote_across_two_passages_covers_both():
+    request = PackRequest(transcript=SESSION)
+    quote = 'every student to know by heart. Never give a sedative on the ward'
+    left_out, _ = generate.uncovered(request, [quote])
+    assert left_out == []
+
+
+def test_only_grounded_quotes_count_for_coverage(fake_writer):
+    invented = {'text': 'Give a sedative.', 'quote': 'sedation is safe and helps anxious patients settle'}
+    fake_writer['answers'].append(json.dumps(fake_pack(summary=[invented], flashcards=[], questions=[])))
+    pack = write(transcript=SESSION)['pack']
+    assert pack['summary'][0]['grounded'] is False
+    assert pack['passage_count'] == 3
+    assert len(pack['uncovered']) == 2  # an invented quote covers nothing

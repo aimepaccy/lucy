@@ -72,6 +72,11 @@ class Strict(BaseModel):
     model_config = ConfigDict(extra='forbid')
 
 
+class TeachingPoint(Strict):
+    text: str = Field(description='One teaching point, one or two sentences.')
+    quote: str = Field(description='Words copied exactly from the material that support this point.')
+
+
 class Flashcard(Strict):
     front: str = Field(description='A question or prompt.')
     back: str = Field(description='The answer, short.')
@@ -92,13 +97,18 @@ class Question(Strict):
 
 class PackDraft(Strict):
     title: str
-    summary: list[str] = Field(description='The key teaching points, one per item.')
+    overview: list[str] = Field(description='Two to four short paragraphs summarising the whole session, in order.')
+    summary: list[TeachingPoint] = Field(description='The key teaching points.')
     flashcards: list[Flashcard]
     questions: list[Question]
     search_terms: list[str] = Field(description='Search terms for further reading. Never links or references.')
 
 
 # What the browser receives: the AI's work plus Lucy's own checks.
+class CheckedPoint(TeachingPoint):
+    grounded: bool
+
+
 class CheckedFlashcard(Flashcard):
     grounded: bool
 
@@ -109,10 +119,14 @@ class CheckedQuestion(Question):
 
 class StudyPack(BaseModel):
     title: str
-    summary: list[str]
+    overview: list[str]
+    summary: list[CheckedPoint]
     flashcards: list[CheckedFlashcard]
     questions: list[CheckedQuestion]
     search_terms: list[str]
+    # Coverage: passages of the material that no item in the pack draws on, out of how many in all.
+    uncovered: list[str]
+    passage_count: int
     model: str
 
 

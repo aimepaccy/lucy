@@ -43,7 +43,8 @@ def fake_pack(**changes) -> dict:
     option = {'text': 'Prednisolone', 'explanation': 'Correct for acute asthma.'}
     pack = {
         'title': 'Acute asthma',
-        'summary': ['Oral steroids for five days.'],
+        'overview': ['The session covered oral steroids in acute asthma.'],
+        'summary': [{'text': 'Oral steroids for five days.', 'quote': 'for five days in acute asthma'}],
         'flashcards': [
             {'front': 'Steroid dose in acute asthma?', 'back': 'Prednisolone 40 mg', 'quote': 'prednisolone 40 mg once daily'},
             {'front': 'First-line biologic?', 'back': 'Omalizumab', 'quote': 'omalizumab is the first line biologic'},

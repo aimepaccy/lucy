@@ -45,6 +45,8 @@ export type Materials = {
 }
 
 // Mirrors StudyPack in backend/app/schemas.py. `grounded` is Lucy's check that the quote is really in the material.
+export type TeachingPoint = { text: string; quote: string; grounded: boolean }
+
 export type Flashcard = { front: string; back: string; quote: string; grounded: boolean }
 
 export type QuizOption = { text: string; explanation: string }
@@ -59,10 +61,14 @@ export type Question = {
 
 export type StudyPack = {
   title: string
-  summary: string[]
+  overview: string[]
+  summary: TeachingPoint[]
   flashcards: Flashcard[]
   questions: Question[]
   search_terms: string[]
+  // Passages of the material no item draws on, out of passage_count in all.
+  uncovered: string[]
+  passage_count: number
   model: string
 }
 
