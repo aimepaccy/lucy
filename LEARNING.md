@@ -162,3 +162,24 @@ Dated entries. For each session: concepts met, what clicked, mistakes worth reme
 - **Measure, then budget:** the longer answer costs about 3,950 tokens besides the material (live run), and about 6,100 in all near the limit. The limit drops to about 1,591 words (roughly 12 to 13 minutes of talk).
 - A pack has at most about 25 quotes, so in a long session more passages will always be listed as not quoted. Acceptable: it errs towards showing more.
 
+
+## 2026-10-13: Phase 6, credible further reading
+- **The rule made real:** the AI only suggests search terms; links come from StatPearls, PubMed, Wikipedia, five YouTube channels, and the search pages of Radiopaedia and MSD Manuals. Two locks on every link: built from a checked id (digits for PubMed, 11 characters for YouTube), then accepted only if it is https on an allowed host (defence in depth).
+- **The pharmacy analogy:** the browser never phones suppliers; it asks Lucy's server, which orders from approved suppliers only (allow-list), keeps the account numbers private (API keys stay on the server), keeps common items on the shelf for a day (cache with a TTL), respects each supplier's limits (rate limits, quotas), and still delivers when one supplier is out (graceful degradation).
+- **GET vs POST:** a lookup that changes nothing is a GET, with the term in the address (URL-encoded: a space becomes `%20`).
+- **async and the event loop:** like a nurse who sends off bloods and does other jobs instead of waiting at the analyser. `asyncio.gather` sends all six lookups at once: the wait is the slowest (about 2 s), not the sum.
+- **Caching:** answers kept 24 hours, at most 500 of them (anyone can send any term), and answers with a failed source are never kept.
+- **Rate limiting from our side:** a numbered-ticket queue spaces NCBI calls 0.33 s apart; a ticket more than 6 s away is refused at once, so a rush cannot block everyone after it.
+- **Keys in headers, not addresses:** addresses end up in logs and error messages. The web client logged every address it called, so its logger is now kept to warnings (and a test checks it).
+- **Data must not become instructions:** NCBI's automatic term mapping read "peak" as an author and "flow" as the journal Flow. Tying every word to a field fixed it; the same idea as preventing SQL injection.
+- **YouTube catalogue:** YouTube's search costs 100 quota units a call for one channel (500 a term, 20 terms a day); reading the five upload lists costs about 80 units a day, then searching our own copy is free. Pagination (`nextPageToken`), a background task that refreshes daily, and an atomic write (temporary file, then one rename).
+- **Matching, and precision vs recall:** topic words must appear, angle words ("acute", "management") only raise the score. Precision is like positive predictive value, recall like sensitivity: Lucy chose precision, because an off-topic video in a demo costs trust, and the other sources cover what it misses. TF-IDF (rare words weigh more) was tried and dropped: in 3,500 titles "management" is as rare as "asthma". Tune on real data: unit tests passed while the first version failed on the real catalogue. Word matching cannot know synonyms; embeddings (phase 8) can.
+- **Stand-ins one layer out:** `httpx2.MockTransport` answers at the HTTP level, so the real parsing code runs and only the internet is fake.
+- **Front end:** the lookups live in `PackView` (`useReading`); `FurtherReading` only shows them and reports clicks up (data down, events up). The first lookup starts from the tab click, not an effect: the linter flagged setting state in an effect, and nothing is fetched for a tab never opened.
+- **Bugs that taught something:** stemming cut "status" to "statu"; a module and a variable both named `cache` (the test hook caught it); a script named `inspect.py` hid Python's own module (shadowing).
+- Retype: skipped at Rugimbana's request.
+- Explain-back answers:
+  1. Why a catalogue: right idea, wrong word. It is about YouTube **quota units**, not tokens (tokens belong to the AI model; rate limits are requests per second or minute). **Revisit.**
+  2. Precision over recall: the trade is right; missing were the why (an off-topic video costs trust, like a false positive) and what covers the cost (the other sources).
+  3. One source fails: right that the others still answer and the student sees which failed. Corrections: an answer with a failure is not cached at all, and Try again does work (the review's must-fix made the browser forget the term so it asks the server again). **Revisit.**
+- AI-tool features: background subagents in parallel (the Quality review and the security review ran side by side; verdict: adopt for every close-out). The post-edit test hook caught the `cache` naming clash within seconds.
