@@ -33,3 +33,50 @@ def fake_transcribe(monkeypatch):
 
     monkeypatch.setattr(providers, 'transcribe', transcribe)
     return calls
+
+
+FAKE_NOTES = 'Give prednisolone 40 mg once daily for five days in acute asthma.'
+
+
+def fake_pack(**changes) -> dict:
+    """What a well-behaved AI might write from FAKE_NOTES: one quote from the notes, one invented."""
+    option = {'text': 'Prednisolone', 'explanation': 'Correct for acute asthma.'}
+    pack = {
+        'title': 'Acute asthma',
+        'summary': ['Oral steroids for five days.'],
+        'flashcards': [
+            {'front': 'Steroid dose in acute asthma?', 'back': 'Prednisolone 40 mg', 'quote': 'prednisolone 40 mg once daily'},
+            {'front': 'First-line biologic?', 'back': 'Omalizumab', 'quote': 'omalizumab is the first line biologic'},
+        ],
+        'questions': [
+            {
+                'stem': 'A 25-year-old with acute asthma. Which oral drug?',
+                'options': [option] * 5,
+                'answer': 'A',
+                'quote': 'Give prednisolone 40 mg once daily for five days',
+            }
+        ],
+        'search_terms': ['acute asthma oral corticosteroids'],
+    }
+    return pack | changes
+
+
+@pytest.fixture(autouse=True)
+def fake_writer(monkeypatch):
+    """Stands in for the LLM: records each call and answers from a queue (a valid pack by default)."""
+    import json
+
+    from app import providers
+
+    calls = []
+    answers = []
+
+    def write_json(instructions, material, form, max_tokens):
+        calls.append({'material': material})
+        answer = answers.pop(0) if answers else json.dumps(fake_pack())
+        if isinstance(answer, Exception):
+            raise answer
+        return answer, 1234
+
+    monkeypatch.setattr(providers, 'write_json', write_json)
+    return {'calls': calls, 'answers': answers}

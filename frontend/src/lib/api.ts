@@ -42,10 +42,20 @@ export function sendSession(notes: string, slides: SlideFile[], recording: Recor
   return request<JobCreated>('/api/sessions', { method: 'POST', body }, UPLOAD_TIMEOUT_MS)
 }
 
+// Plain JSON this time: only text goes, the student's notes and corrected copy of what Lucy heard and read.
+export function writePack(notes: string, materials: Materials): Promise<{ job_id: string }> {
+  const body = JSON.stringify({
+    notes,
+    transcript: materials.transcript,
+    slides: materials.slides.map((slide) => ({ text: slide.text })),
+  })
+  return request('/api/packs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }, CHECK_TIMEOUT_MS)
+}
+
 const wait = (ms: number) => new Promise((resolve) => window.setTimeout(resolve, ms))
 
 // Polling: ask "is it ready yet?" every 1.5 seconds until the job is done, has failed, or takes too long.
-export async function waitForJob(jobId: string, onStep: (step: string) => void): Promise<Materials> {
+export async function waitForJob(jobId: string, onStep: (step: string) => void): Promise<JobState> {
   const giveUpAt = Date.now() + JOB_TIMEOUT_MS
   let failedChecks = 0
   while (Date.now() < giveUpAt) {
@@ -64,8 +74,8 @@ export async function waitForJob(jobId: string, onStep: (step: string) => void):
       await wait(POLL_EVERY_MS)
       continue
     }
-    if (job.status === 'done' && job.materials) return job.materials
-    if (job.status === 'failed') throw new ApiError(job.error ?? 'Lucy could not read your material.')
+    if (job.status === 'done') return job
+    if (job.status === 'failed') throw new ApiError(job.error ?? 'Something went wrong. Please try again.')
     onStep(job.step)
     await wait(POLL_EVERY_MS)
   }

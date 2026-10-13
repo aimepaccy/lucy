@@ -31,12 +31,41 @@ export type Materials = {
   warnings: string[]
 }
 
+// Mirrors StudyPack in backend/app/schemas.py. `grounded` is Lucy's check that the quote is really in the material.
+export type Flashcard = { front: string; back: string; quote: string; grounded: boolean }
+
+export type QuizOption = { text: string; explanation: string }
+
+export type Question = {
+  stem: string
+  options: QuizOption[]
+  answer: 'A' | 'B' | 'C' | 'D' | 'E'
+  quote: string
+  grounded: boolean
+}
+
+export type StudyPack = {
+  title: string
+  summary: string[]
+  flashcards: Flashcard[]
+  questions: Question[]
+  search_terms: string[]
+  model: string
+}
+
 export type JobState = {
   status: 'queued' | 'working' | 'done' | 'failed'
   step: string
   materials: Materials | null
+  pack: StudyPack | null
   error: string | null
 }
+
+export type WriteState =
+  | { status: 'idle' }
+  | { status: 'writing'; step: string }
+  | { status: 'done'; pack: StudyPack }
+  | { status: 'error'; message: string }
 
 export type SendState =
   | { status: 'idle' }

@@ -211,6 +211,7 @@ def test_transcription_failure_is_explained(monkeypatch):
         'status': 'failed',
         'step': 'Failed',
         'materials': None,
+        'pack': None,
         'error': 'The transcription service is busy. Please try again in a minute.',
     }
 

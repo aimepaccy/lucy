@@ -5,7 +5,7 @@ from typing import Annotated
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile
 from fastapi import Path as PathParam
 
-from app import jobs
+from app import generate, jobs
 from app.files import (
     MAX_AUDIO_BYTES,
     MAX_AUDIO_MB,
@@ -16,10 +16,18 @@ from app.files import (
     detect_slide_kind,
     display_name,
 )
-from app.schemas import AudioReceipt, Health, JobCreated, JobState, Limits, SessionReceipt, SlideReceipt
-
-# Same limit as the notes editor in the front end (NotesEditor.tsx).
-MAX_NOTES_CHARS = 20_000
+from app.schemas import (
+    MAX_NOTES_CHARS,
+    AudioReceipt,
+    Health,
+    JobCreated,
+    JobState,
+    Limits,
+    PackJobCreated,
+    PackRequest,
+    SessionReceipt,
+    SlideReceipt,
+)
 
 router = APIRouter(prefix='/api')
 
@@ -93,6 +101,26 @@ def receive_session(
         raise
     receipt = SessionReceipt(notes_words=len(notes.split()), slides=slide_receipts, audio=audio_receipt)
     return JobCreated(job_id=job_id, receipt=receipt)
+
+
+@router.post('/packs', status_code=202)
+def write_pack(request: PackRequest, background: BackgroundTasks) -> PackJobCreated:
+    material = generate.assemble(request)
+    if not material:
+        raise HTTPException(status_code=422, detail='There is nothing to write a study pack from yet.')
+    try:
+        generate.check_budget(material)
+    except generate.MaterialTooLong as error:
+        raise HTTPException(
+            status_code=413,
+            detail=(
+                f'Your material is about {error.words:,} words, and Lucy can write from about '
+                f'{error.allowed_words:,} at a time. Shorten the transcript or leave out a slide file.'
+            ),
+        ) from error
+    job_id = jobs.create()
+    background.add_task(jobs.write, job_id, request)
+    return PackJobCreated(job_id=job_id)
 
 
 @router.get('/jobs/{job_id}')

@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     # Any OpenAI-compatible provider. SecretStr keeps the key out of logs and error messages.
     llm_base_url: str = 'https://api.groq.com/openai/v1'
     llm_api_key: SecretStr = SecretStr('')
+    llm_model: str = 'openai/gpt-oss-120b'
+    # The provider's limit on tokens per minute (in and out together). It caps how much material fits in one go.
+    llm_tokens_per_minute: int = 8000
+    # How long a reasoning model thinks before answering. Left empty, it is not sent (not every provider knows it).
+    llm_reasoning_effort: str = 'low'
 
     # Not every provider offers speech-to-text, so transcription can use its own.
     # Left empty, it uses the same provider as the LLM.

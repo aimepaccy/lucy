@@ -13,8 +13,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app import extract, providers
-from app.schemas import AudioKind, JobState, Materials, SlideKind, SlideText
+from app import extract, generate, providers
+from app.schemas import AudioKind, JobState, Materials, PackRequest, SlideKind, SlideText
 
 RESULT_TTL_SECONDS = 15 * 60
 # Every job's uploads live under this one folder, so leftovers can be found and removed.
@@ -134,15 +134,32 @@ def run(job_id: str, work: JobInput) -> None:
 
         materials = Materials(transcript=transcript, slides=slides, warnings=warnings)
         _update(job_id, status='done', step='Done', materials=materials)
-    except providers.ProviderError as error:
+    except Exception as error:
+        _fail(job_id, error, 'Something went wrong while reading your material.')
+    finally:
+        shutil.rmtree(work.folder, ignore_errors=True)
+        log.info('Job %s finished in %.1f s', job_id, time.monotonic() - started)
+
+
+def write(job_id: str, request: PackRequest) -> None:
+    started = time.monotonic()
+    try:
+        _update(job_id, status='working', step='Writing your study pack')
+        pack = generate.write_pack(request)
+        _update(job_id, status='done', step='Done', pack=pack)
+    except Exception as error:
+        _fail(job_id, error, 'Something went wrong while writing your study pack.')
+    finally:
+        log.info('Job %s finished in %.1f s', job_id, time.monotonic() - started)
+
+
+def _fail(job_id: str, error: Exception, fallback: str) -> None:
+    if isinstance(error, providers.ProviderError):
         # For the operator: what kind of failure, never the student's material.
         cause = error.__cause__
         status = getattr(cause, 'status_code', '-')
         log.warning('Job %s: provider failed (%s, status %s)', job_id, type(cause).__name__, status)
         _update(job_id, status='failed', step='Failed', error=str(error))
-    except Exception:
-        log.exception('Job %s failed', job_id)
-        _update(job_id, status='failed', step='Failed', error='Something went wrong while reading your material.')
-    finally:
-        shutil.rmtree(work.folder, ignore_errors=True)
-        log.info('Job %s finished in %.1f s', job_id, time.monotonic() - started)
+    else:
+        log.error('Job %s failed', job_id, exc_info=error)
+        _update(job_id, status='failed', step='Failed', error=fallback)

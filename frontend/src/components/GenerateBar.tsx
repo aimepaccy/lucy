@@ -6,7 +6,7 @@ import { formatDuration, formatFileSize, plural } from '@/lib/format'
 import { hasReviewable } from '@/lib/materials'
 import { rise, spring } from '@/lib/motion'
 import { cn } from '@/lib/utils'
-import type { Recording, SendState, SessionReceipt } from '@/types'
+import type { Recording, SendState, SessionReceipt, WriteState } from '@/types'
 
 type GenerateBarProps = {
   generateRef: Ref<HTMLButtonElement>
@@ -19,7 +19,9 @@ type GenerateBarProps = {
   inputsChanged: boolean
   // True when the student has corrected what Lucy heard and read.
   corrected: boolean
+  writeState: WriteState
   onGenerate: () => void
+  onWrite: () => void
   onDismiss: () => void
 }
 
@@ -44,13 +46,16 @@ export function GenerateBar({
   sendState,
   inputsChanged,
   corrected,
+  writeState,
   onGenerate,
+  onWrite,
   onDismiss,
 }: GenerateBarProps) {
   // Remembers which reading the student agreed to replace; a new reading starts unconfirmed.
   const [replaceConfirmedFor, setReplaceConfirmedFor] = useState<SendState | null>(null)
-  const busy = sendState.status === 'sending' || sendState.status === 'working'
   const reviewing = sendState.status === 'ready'
+  const writing = reviewing && writeState.status === 'writing'
+  const busy = sendState.status === 'sending' || sendState.status === 'working' || writing
 
   const chips = [
     notesWords > 0 && { key: 'notes', icon: NotebookPen, label: `${plural(notesWords, 'word')} of notes` },
@@ -63,41 +68,54 @@ export function GenerateBar({
     slideCount > 0 && { key: 'slides', icon: Presentation, label: plural(slideCount, 'slide file') },
   ].filter((chip) => chip !== false && chip !== null)
 
-  // While the student reviews, the button writes the study pack (phase 4b), or reads again if the inputs changed.
-  const enabled = chips.length > 0 && !busy && !recordingLive && (!reviewing || inputsChanged)
+  // While the student reviews, the button writes the study pack, or reads again if the inputs changed.
+  const enabled = chips.length > 0 && !busy && !recordingLive
   const askingToReplace = reviewing && inputsChanged && corrected && replaceConfirmedFor === sendState
   const label = reviewing
     ? inputsChanged
       ? askingToReplace
         ? 'Yes, read again'
         : 'Read again'
-      : 'Write my study pack'
+      : writeState.status === 'done'
+        ? 'Write again'
+        : 'Write my study pack'
     : 'Generate study pack'
 
   // Reading again throws away the student's corrections, so the first press only asks.
   function handleClick() {
-    if (reviewing && inputsChanged && corrected && !askingToReplace) setReplaceConfirmedFor(sendState)
+    if (reviewing && !inputsChanged) onWrite()
+    else if (reviewing && corrected && !askingToReplace) setReplaceConfirmedFor(sendState)
     else onGenerate()
   }
 
   const progress =
-    sendState.status === 'sending' ? 'Uploading to Lucy' : sendState.status === 'working' ? sendState.step : null
+    sendState.status === 'sending'
+      ? 'Uploading to Lucy'
+      : sendState.status === 'working'
+        ? sendState.step
+        : writeState.status === 'writing' && reviewing
+          ? writeState.step
+          : null
 
   function describeState(): string | null {
     if (sendState.status === 'working') return describeReceipt(sendState.receipt)
     if (sendState.status === 'error') return sendState.message
     if (!reviewing || chips.length === 0) return null
+    if (writeState.status === 'error' && !inputsChanged) return writeState.message
+    if (writeState.status === 'writing') return 'Writing usually takes under a minute.'
     if (askingToReplace) return 'Reading again replaces your corrections. Press "Yes, read again" to continue, or keep editing above.'
     if (inputsChanged) {
       const loss = corrected ? '; this replaces your corrections' : ''
       return `Your recording or slides changed after Lucy read them. Read again to include the changes${loss}.`
     }
-    if (!hasReviewable(sendState.materials)) return 'Lucy has your notes. Writing the study pack comes next.'
-    return 'Lucy has read your material. Correct anything it got wrong above; writing the study pack comes next.'
+    if (writeState.status === 'done') return 'Your study pack is ready below. Correct the text above and write again if you need to.'
+    if (!hasReviewable(sendState.materials)) return 'Lucy has your notes and can write your study pack from them.'
+    return 'Lucy has read your material. Correct anything it got wrong above, then write your study pack.'
   }
 
   const message = describeState()
   const caution = reviewing && inputsChanged
+  const failed = sendState.status === 'error' || (reviewing && !inputsChanged && writeState.status === 'error')
 
   const announcement = progress ?? message ?? ''
 
@@ -179,10 +197,10 @@ export function GenerateBar({
               <p
                 className={cn(
                   'flex items-start gap-2 pt-3',
-                  sendState.status === 'error' ? 'text-destructive' : 'text-muted-foreground',
+                  failed ? 'text-destructive' : 'text-muted-foreground',
                 )}
               >
-                {sendState.status === 'error' ? (
+                {failed ? (
                   <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 ) : caution ? (
                   <AlertTriangle className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />

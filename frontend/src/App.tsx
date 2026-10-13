@@ -7,16 +7,17 @@ import { Header } from '@/components/Header'
 import { Hero } from '@/components/Hero'
 import { MaterialsPanel } from '@/components/MaterialsPanel'
 import { NotesEditor } from '@/components/NotesEditor'
+import { PackView } from '@/components/PackView'
 import { PrivacyNotice } from '@/components/PrivacyNotice'
 import { Recorder } from '@/components/Recorder'
 import { SlideDropZone } from '@/components/SlideDropZone'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useTheme } from '@/hooks/use-theme'
-import { ApiError, sendSession, waitForJob } from '@/lib/api'
+import { ApiError, sendSession, waitForJob, writePack } from '@/lib/api'
 import { countWords } from '@/lib/format'
 import { hasCorrections, hasReviewable } from '@/lib/materials'
 import { stagger } from '@/lib/motion'
-import type { Materials, Recording, SendState, SlideFile } from '@/types'
+import type { Materials, Recording, SendState, SlideFile, WriteState } from '@/types'
 
 export default function App() {
   const { theme, chooseTheme } = useTheme()
@@ -27,6 +28,7 @@ export default function App() {
   const [sendState, setSendState] = useState<SendState>({ status: 'idle' })
   // The student's corrected copy of what Lucy heard and read; the AI will write from this.
   const [draft, setDraft] = useState<Materials | null>(null)
+  const [writeState, setWriteState] = useState<WriteState>({ status: 'idle' })
   const generateRef = useRef<HTMLButtonElement>(null)
 
   // The panel's close button disappears with it, so keyboard focus moves to a sensible place.
@@ -44,15 +46,34 @@ export default function App() {
   async function handleGenerate() {
     setSendState({ status: 'sending' })
     setDraft(null)
+    setWriteState({ status: 'idle' })
+    let materials: Materials
     try {
       const { job_id, receipt } = await sendSession(notes, slides, recording)
       setSendState({ status: 'working', step: 'Waiting to start', receipt })
-      const materials = await waitForJob(job_id, (step) => setSendState({ status: 'working', step, receipt }))
+      const job = await waitForJob(job_id, (step) => setSendState({ status: 'working', step, receipt }))
+      if (!job.materials) throw new ApiError('Lucy could not read your material.')
+      materials = job.materials
       setSendState({ status: 'ready', materials, recording, slides })
       setDraft(materials)
     } catch (error) {
-      const message = error instanceof ApiError ? error.message : 'Something went wrong. Please try again.'
-      setSendState({ status: 'error', message })
+      setSendState({ status: 'error', message: messageOf(error) })
+      return
+    }
+    // Nothing to check (notes only), so Lucy goes straight on to writing.
+    if (!hasReviewable(materials) && materials.warnings.length === 0) await handleWrite(materials)
+  }
+
+  // Writes from the corrected copy. The review state stays as it is, so a failure loses no corrections.
+  async function handleWrite(materials: Materials) {
+    setWriteState({ status: 'writing', step: 'Sending to Lucy' })
+    try {
+      const { job_id } = await writePack(notes, materials)
+      const job = await waitForJob(job_id, (step) => setWriteState({ status: 'writing', step }))
+      if (!job.pack) throw new ApiError('Lucy could not write your study pack.')
+      setWriteState({ status: 'done', pack: job.pack })
+    } catch (error) {
+      setWriteState({ status: 'error', message: messageOf(error) })
     }
   }
 
@@ -93,6 +114,8 @@ export default function App() {
             <MaterialsPanel heard={sendState.materials} draft={draft} onChange={setDraft} onClose={closeMaterials} />
           )}
 
+          {writeState.status === 'done' && <PackView pack={writeState.pack} />}
+
           <GenerateBar
             generateRef={generateRef}
             notesWords={countWords(notes)}
@@ -102,7 +125,9 @@ export default function App() {
             sendState={sendState}
             inputsChanged={inputsChanged}
             corrected={corrected}
+            writeState={writeState}
             onGenerate={handleGenerate}
+            onWrite={() => draft && handleWrite(draft)}
             onDismiss={() => setSendState({ status: 'idle' })}
           />
 
@@ -113,4 +138,8 @@ export default function App() {
       </TooltipProvider>
     </MotionConfig>
   )
+}
+
+function messageOf(error: unknown) {
+  return error instanceof ApiError ? error.message : 'Something went wrong. Please try again.'
 }
