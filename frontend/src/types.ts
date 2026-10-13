@@ -25,6 +25,19 @@ export type JobCreated = {
   receipt: SessionReceipt
 }
 
+// Mirrors Limits in backend/app/schemas.py.
+export type Limits = {
+  max_slide_files: number
+  max_slide_mb: number
+  max_audio_mb: number
+  max_notes_chars: number
+  max_pack_words: number
+  max_pack_chars: number
+}
+
+// How much text a study pack would be written from, in characters (as the server measures it).
+export type PackSize = { chars: number }
+
 export type Materials = {
   transcript: string | null
   slides: { name: string; kind: SlideFile['kind']; pages: number; text: string }[]

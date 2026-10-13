@@ -12,6 +12,7 @@ import { PrivacyNotice } from '@/components/PrivacyNotice'
 import { Recorder } from '@/components/Recorder'
 import { SlideDropZone } from '@/components/SlideDropZone'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { useLimits } from '@/hooks/use-limits'
 import { useTheme } from '@/hooks/use-theme'
 import { ApiError, sendSession, waitForJob, writePack } from '@/lib/api'
 import { countWords } from '@/lib/format'
@@ -21,6 +22,7 @@ import type { Materials, Recording, SendState, SlideFile, WriteState } from '@/t
 
 export default function App() {
   const { theme, chooseTheme } = useTheme()
+  const limits = useLimits()
   const [notes, setNotes] = useState('')
   const [recording, setRecording] = useState<Recording | null>(null)
   const [recordingLive, setRecordingLive] = useState(false)
@@ -97,6 +99,8 @@ export default function App() {
   // them with what Lucy read tells us whether the panel still matches the inputs.
   const inputsChanged = sendState.status === 'ready' && (sendState.recording !== recording || sendState.slides !== slides)
   const corrected = sendState.status === 'ready' && draft !== null && hasCorrections(sendState.materials, draft)
+  const packText = draft ? [notes, draft.transcript ?? '', ...draft.slides.map((slide) => slide.text)].join('\n') : ''
+  const packSize = draft ? { chars: packText.length } : null
   const showPanel =
     sendState.status === 'ready' && (hasReviewable(sendState.materials) || sendState.materials.warnings.length > 0)
 
@@ -158,6 +162,8 @@ export default function App() {
             inputsChanged={inputsChanged}
             corrected={corrected}
             writeState={writeState}
+            packSize={packSize}
+            limits={limits}
             onGenerate={handleGenerate}
             onWrite={() => draft && handleWrite(draft)}
             onDismiss={() => setSendState({ status: 'idle' })}

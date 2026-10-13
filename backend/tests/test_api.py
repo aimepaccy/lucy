@@ -94,7 +94,8 @@ def test_limits():
         'max_slide_mb': 25,
         'max_audio_mb': 25,
         'max_notes_chars': 20_000,
-        'max_pack_words': 2475,
+        'max_pack_words': 1925,
+        'max_pack_chars': 11550,
     }
 
 

@@ -19,7 +19,9 @@ OUTPUT_TOKENS = 3500
 OVERHEAD_TOKENS = 1200
 # A rough rule for English: about 4 characters per token. Medical words cost a little more, so we round down.
 CHARS_PER_TOKEN = 3.5
-WORDS_PER_TOKEN = 0.75
+# Measured on a role-played round: about 6 characters per word, spaces included. Words shown to the student
+# are worked out from characters at this rate, so the number shown is the number the check applies.
+CHARS_PER_WORD = 6
 # A quote shorter than this proves little: "asthma" appears in any asthma session.
 MIN_QUOTE_WORDS = 4
 MIN_PIECE_WORDS = 3
@@ -87,15 +89,23 @@ def estimate_tokens(text: str) -> int:
     return round(len(text) / CHARS_PER_TOKEN)
 
 
+def _allowed_tokens() -> int:
+    return get_settings().llm_tokens_per_minute - OUTPUT_TOKENS - OVERHEAD_TOKENS
+
+
 def allowed_words() -> int:
-    return int((get_settings().llm_tokens_per_minute - OUTPUT_TOKENS - OVERHEAD_TOKENS) * WORDS_PER_TOKEN)
+    return allowed_chars() // CHARS_PER_WORD
+
+
+def allowed_chars() -> int:
+    """The limit the budget check really applies, so the browser can show the same one."""
+    return int(_allowed_tokens() * CHARS_PER_TOKEN)
 
 
 def check_budget(material: str) -> None:
     """Refuse at once, before any AI call, if the material cannot fit in one minute's allowance."""
-    allowed = get_settings().llm_tokens_per_minute - OUTPUT_TOKENS - OVERHEAD_TOKENS
-    if estimate_tokens(material) > allowed:
-        raise MaterialTooLong(len(material.split()), allowed_words())
+    if estimate_tokens(material) > _allowed_tokens():
+        raise MaterialTooLong(len(material) // CHARS_PER_WORD, allowed_words())
 
 
 def _words(text: str) -> list[str]:

@@ -45,6 +45,7 @@ def limits() -> Limits:
         max_audio_mb=MAX_AUDIO_MB,
         max_notes_chars=MAX_NOTES_CHARS,
         max_pack_words=generate.allowed_words(),
+        max_pack_chars=generate.allowed_chars(),
     )
 
 

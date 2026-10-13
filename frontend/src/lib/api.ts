@@ -1,4 +1,4 @@
-import type { JobCreated, JobState, Materials, Recording, SlideFile } from '@/types'
+import type { JobCreated, JobState, Limits, Materials, Recording, SlideFile } from '@/types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 // Long enough for a full set of slides on slow Wi-Fi.
@@ -40,6 +40,10 @@ export function sendSession(notes: string, slides: SlideFile[], recording: Recor
   if (recording) body.append('audio', recording.file, recording.name)
 
   return request<JobCreated>('/api/sessions', { method: 'POST', body }, UPLOAD_TIMEOUT_MS)
+}
+
+export function getLimits(): Promise<Limits> {
+  return request<Limits>('/api/limits', {}, CHECK_TIMEOUT_MS)
 }
 
 // Plain JSON this time: only text goes, the student's notes and corrected copy of what Lucy heard and read.

@@ -5,8 +5,9 @@ import { buttonVariants } from '@/components/ui/button'
 import { formatDuration, formatFileSize, plural } from '@/lib/format'
 import { hasReviewable } from '@/lib/materials'
 import { rise, spring } from '@/lib/motion'
+import { Steps, type StepKey } from '@/components/Steps'
 import { cn } from '@/lib/utils'
-import type { Recording, SendState, SessionReceipt, WriteState } from '@/types'
+import type { Limits, PackSize, Recording, SendState, SessionReceipt, WriteState } from '@/types'
 
 type GenerateBarProps = {
   generateRef: Ref<HTMLButtonElement>
@@ -20,6 +21,9 @@ type GenerateBarProps = {
   // True when the student has corrected what Lucy heard and read.
   corrected: boolean
   writeState: WriteState
+  // The text a study pack would be written from, and the server's limits (null until known).
+  packSize: PackSize | null
+  limits: Limits | null
   onGenerate: () => void
   onWrite: () => void
   onDismiss: () => void
@@ -47,6 +51,8 @@ export function GenerateBar({
   inputsChanged,
   corrected,
   writeState,
+  packSize,
+  limits,
   onGenerate,
   onWrite,
   onDismiss,
@@ -69,8 +75,30 @@ export function GenerateBar({
     slideCount > 0 && { key: 'slides', icon: Presentation, label: plural(slideCount, 'slide file') },
   ].filter((chip) => chip !== false && chip !== null)
 
+  // Over the limit, writing is switched off before a request is wasted. The server checks again anyway.
+  const tooLong =
+    reviewing && !inputsChanged && limits !== null && packSize !== null && packSize.chars > limits.max_pack_chars
+
   // While the student reviews, the button writes the study pack, or reads again if the inputs changed.
-  const enabled = chips.length > 0 && !busy && !recordingLive
+  const enabled = chips.length > 0 && !busy && !recordingLive && !tooLong
+
+  // Check is skipped when there is nothing to check (notes only).
+  const willCheck = reviewing ? hasReviewable(sendState.materials) || sendState.materials.warnings.length > 0 : recording !== null || slideCount > 0
+  const steps: StepKey[] = willCheck ? ['upload', 'read', 'check', 'write'] : ['upload', 'read', 'write']
+  const currentStep: StepKey | 'done' | null =
+    sendState.status === 'sending'
+      ? 'upload'
+      : sendState.status === 'working'
+        ? 'read'
+        : !reviewing
+          ? null
+          : writeState.status === 'writing'
+            ? 'write'
+            : writeState.status === 'done'
+              ? 'done'
+              : willCheck
+                ? 'check'
+                : 'write'
   const askingToReplace = reviewing && inputsChanged && corrected && replaceConfirmedFor === sendState
   const label = reviewing
     ? inputsChanged
@@ -104,6 +132,9 @@ export function GenerateBar({
     if (!reviewing || chips.length === 0) return null
     if (writeState.status === 'error' && !inputsChanged) return writeState.message
     if (writeState.status === 'writing') return 'Writing usually takes under a minute.'
+    if (tooLong && limits) {
+      return `This is more than Lucy can write from at once (about ${limits.max_pack_words.toLocaleString()} words). Shorten your notes, the transcript or the slide text.`
+    }
     if (askingToReplace) return 'Reading again replaces your corrections. Press "Yes, read again" to continue, or keep editing above.'
     if (inputsChanged) {
       const loss = corrected ? '; this replaces your corrections' : ''
@@ -115,7 +146,7 @@ export function GenerateBar({
   }
 
   const message = describeState()
-  const caution = reviewing && inputsChanged
+  const caution = reviewing && (inputsChanged || tooLong)
   const failed = sendState.status === 'error' || (reviewing && !inputsChanged && writeState.status === 'error')
 
   const announcement = progress ?? message ?? ''
@@ -126,6 +157,14 @@ export function GenerateBar({
         <p role="status" className="sr-only">
           {announcement}
         </p>
+        {currentStep !== null && (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b pb-3">
+            <Steps steps={steps} current={currentStep} busy={busy} />
+            {reviewing && !inputsChanged && limits && packSize && writeState.status !== 'writing' && (
+              <WordMeter size={packSize} limits={limits} />
+            )}
+          </div>
+        )}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex min-h-8 flex-1 flex-wrap items-center gap-2">
             <AnimatePresence mode="popLayout" initial={false}>
@@ -223,5 +262,34 @@ export function GenerateBar({
         </AnimatePresence>
       </div>
     </motion.div>
+  )
+}
+
+// How much of one study pack's allowance the material uses. Characters decide, as on the server, and are
+// shown as words at the server's own rate, so the number shown is the number the check applies.
+function WordMeter({ size, limits }: { size: PackSize; limits: Limits }) {
+  const share = Math.min(1, size.chars / limits.max_pack_chars)
+  const over = size.chars > limits.max_pack_chars
+  const words = Math.round(size.chars / (limits.max_pack_chars / limits.max_pack_words))
+  return (
+    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+      <span className="tabular-nums">
+        About {words.toLocaleString()} of {limits.max_pack_words.toLocaleString()} words
+      </span>
+      <div
+        role="meter"
+        aria-label="Material for one study pack"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(share * 100)}
+        className="h-1.5 w-20 overflow-hidden rounded-full bg-muted"
+      >
+        <motion.div
+          className={cn('h-full rounded-full', over ? 'bg-warning' : share > 0.85 ? 'bg-warning/70' : 'bg-primary')}
+          animate={{ width: `${share * 100}%` }}
+          transition={spring}
+        />
+      </div>
+    </div>
   )
 }

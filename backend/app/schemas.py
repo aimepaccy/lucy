@@ -135,3 +135,4 @@ class Limits(BaseModel):
     max_notes_chars: int
     # About how many words of material fit in one study pack with the provider's per-minute allowance.
     max_pack_words: int
+    max_pack_chars: int
