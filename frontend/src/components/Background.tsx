@@ -1,27 +1,11 @@
 import { motion, useReducedMotion } from 'motion/react'
 
-const drift = { duration: 26, repeat: Infinity, repeatType: 'mirror' as const, ease: 'easeInOut' as const }
-
-// Uneven corners make the washes look like ink spreading on paper rather than perfect circles.
-const washShape = '58% 42% 63% 37% / 45% 55% 45% 55%'
-
+// Kept to two quiet things: the paper's grain, and one ensō drawn once.
 export function Background() {
   const still = useReducedMotion()
 
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <motion.div
-        className="absolute -top-48 -left-40 size-152 bg-primary/12 blur-3xl"
-        style={{ borderRadius: washShape }}
-        animate={{ x: [0, 120, 40], y: [0, 60, 140], rotate: [0, 25, -10] }}
-        transition={drift}
-      />
-      <motion.div
-        className="absolute top-1/3 -right-48 size-136 bg-gold/10 blur-3xl"
-        style={{ borderRadius: washShape }}
-        animate={{ x: [0, -100, -30], y: [0, -80, 40], rotate: [0, -20, 15] }}
-        transition={{ ...drift, duration: 32 }}
-      />
       <Enso still={still ?? false} />
       <div className="paper-grain absolute inset-0" />
     </div>

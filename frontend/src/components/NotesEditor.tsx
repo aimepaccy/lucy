@@ -39,7 +39,6 @@ export function NotesEditor({ value, onChange, className }: NotesEditorProps) {
       title="Notes"
       description="Teaching points, mnemonics, anything the teacher stressed."
       className={className}
-      mended
       aside={
         <span className="overflow-hidden text-xs text-muted-foreground tabular-nums">
           <AnimatePresence mode="popLayout" initial={false}>
@@ -71,33 +70,18 @@ export function NotesEditor({ value, onChange, className }: NotesEditorProps) {
       <label htmlFor="notes" className="sr-only">
         Notes
       </label>
-      <div className="relative flex flex-1 flex-col">
-        <Textarea
-          id="notes"
-          value={value}
-          onChange={(event) => {
-            setCleared(null)
-            onChange(event.target.value)
-          }}
-          maxLength={MAX_CHARS}
-          placeholder={'For example:\nCURB-65 for pneumonia severity\nAlways check inhaler technique before stepping up asthma treatment'}
-          className="min-h-64 flex-1 resize-none bg-(--paper) px-4 py-3 text-[0.95rem] leading-7 shadow-sm md:text-[0.95rem] lg:min-h-96 dark:bg-(--paper)"
-        />
-        <Seal />
-      </div>
+      <Textarea
+        id="notes"
+        value={value}
+        onChange={(event) => {
+          setCleared(null)
+          onChange(event.target.value)
+        }}
+        maxLength={MAX_CHARS}
+        placeholder={'For example:\nCURB-65 for pneumonia severity\nAlways check inhaler technique before stepping up asthma treatment'}
+        className="ruled-paper min-h-64 flex-1 resize-none bg-(--paper) py-3 pr-4 pl-13 text-[0.95rem] leading-7 shadow-sm md:text-[0.95rem] lg:min-h-96 dark:bg-(--paper)"
+      />
     </Panel>
   )
 }
 
-// A hanko, the red name seal pressed onto Japanese documents. This one reads 学, "learn".
-function Seal() {
-  return (
-    <span
-      aria-hidden="true"
-      className="pointer-events-none absolute right-4 bottom-4 grid size-9 rotate-[-4deg] place-items-center rounded-[3px] border-2 border-(--vermilion) text-lg leading-none text-(--vermilion) opacity-75 select-none"
-      style={{ fontFamily: '"Yu Mincho", "Hiragino Mincho ProN", "Noto Serif JP", serif' }}
-    >
-      学
-    </span>
-  )
-}
