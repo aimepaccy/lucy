@@ -5,6 +5,7 @@ import { Background } from '@/components/Background'
 import { GenerateBar } from '@/components/GenerateBar'
 import { Header } from '@/components/Header'
 import { Hero } from '@/components/Hero'
+import { KintsugiSeam } from '@/components/Kintsugi'
 import { Library } from '@/components/Library'
 import { MaterialsPanel } from '@/components/MaterialsPanel'
 import { NotesEditor } from '@/components/NotesEditor'
@@ -181,7 +182,6 @@ export default function App() {
             }
           />
           <Hero />
-          <PrivacyNotice />
 
           <div className="grid gap-6 lg:grid-cols-5">
             <NotesEditor
@@ -235,9 +235,14 @@ export default function App() {
             onDismiss={() => setSendState({ status: 'idle' })}
           />
 
-          <p className="pb-2 text-center text-xs text-muted-foreground">
-            Study packs are AI-generated and can contain mistakes. Check them against trusted sources.
-          </p>
+          <PrivacyNotice />
+
+          <footer className="flex flex-col items-center gap-3 pb-2">
+            <KintsugiSeam className="h-3 w-56 opacity-80" />
+            <p className="text-center text-xs text-muted-foreground">
+              Study packs are AI-generated and can contain mistakes. Check them against trusted sources.
+            </p>
+          </footer>
         </motion.main>
       </TooltipProvider>
     </MotionConfig>

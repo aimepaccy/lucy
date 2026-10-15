@@ -1,7 +1,8 @@
 import { useRef, useState, type DragEvent } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, CloudUpload, FileText, Presentation, X } from 'lucide-react'
+import { AlertCircle, FileText, Presentation, X } from 'lucide-react'
 import { Panel } from '@/components/Panel'
+import { SlideSketch } from '@/components/SlideSketch'
 import { Button } from '@/components/ui/button'
 import { formatFileSize } from '@/lib/format'
 import { spring } from '@/lib/motion'
@@ -85,17 +86,11 @@ export function SlideDropZone({ files, onAdd, onRemove }: SlideDropZoneProps) {
         whileTap={{ scale: 0.99 }}
         transition={spring}
         className={cn(
-          'flex w-full flex-col items-center gap-2 rounded-lg border-2 border-dashed px-4 py-7 text-center transition-colors outline-none focus-visible:ring-4 focus-visible:ring-ring/30',
+          'hand-radius flex w-full flex-col items-center gap-2 border-2 border-dashed px-4 py-5 text-center transition-colors outline-none focus-visible:ring-4 focus-visible:ring-ring/30',
           dragging ? 'border-primary bg-accent' : 'border-input hover:border-primary/50 hover:bg-accent/40',
         )}
       >
-        <motion.span
-          animate={dragging ? { y: [0, -6, 0] } : { y: 0 }}
-          transition={dragging ? { duration: 0.9, repeat: Infinity, ease: 'easeInOut' } : spring}
-          className="grid size-11 place-items-center rounded-full bg-accent text-accent-foreground"
-        >
-          <CloudUpload className="size-5" aria-hidden="true" />
-        </motion.span>
+        <SlideSketch replay={dragging} className="h-24 w-auto" />
         <span className="text-sm font-medium">
           {dragging ? 'Drop to add' : (
             <>
