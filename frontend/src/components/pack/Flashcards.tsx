@@ -2,7 +2,6 @@ import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { KintsugiSeam } from '@/components/Kintsugi'
 import { Source } from '@/components/pack/Source'
 import { spring } from '@/lib/motion'
 import { cn } from '@/lib/utils'
@@ -125,7 +124,6 @@ function Face({ back = false, children }: { back?: boolean; children: ReactNode 
       )}
     >
       {children}
-      <KintsugiSeam variant="corner" className="absolute -right-px -bottom-px h-7 w-12 -scale-x-100 -scale-y-100" />
     </span>
   )
 }

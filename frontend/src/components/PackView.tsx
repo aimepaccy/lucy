@@ -54,7 +54,6 @@ export function PackView({ record, save }: PackViewProps) {
   return (
     <motion.div id="pack" initial="hidden" animate="show" className="scroll-mt-6">
       <Panel
-        mended
         icon={BookOpenCheck}
         title={pack.title}
         description={

@@ -3,6 +3,7 @@
 @import "@fontsource-variable/inter";
 @import "@fontsource-variable/fraunces/soft.css";
 @import "@fontsource-variable/fraunces/soft-italic.css";
+@import "@fontsource-variable/jetbrains-mono/wght.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -68,6 +69,7 @@
 @theme inline {
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Fraunces Variable", ui-serif, Georgia, serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, monospace;
   --radius-sm: calc(var(--radius) - 6px);
   --radius-md: calc(var(--radius) - 3px);
   --radius-lg: var(--radius);
@@ -151,7 +153,7 @@
   mix-blend-mode: normal;
 }
 
-/* Plain khaki paper for the notes, also used for the cassette label and the VU meter. */
+/* Khaki paper for the notes, also used for the cassette label and the VU meter. */
 :root {
   --paper: oklch(0.915 0.04 85);
   --vermilion: oklch(0.6 0.19 33);
@@ -159,6 +161,17 @@
 .dark {
   --paper: oklch(0.29 0.025 80);
   --vermilion: oklch(0.66 0.17 33);
+}
+
+/* Ruled like a legal pad: faint lines that scroll with the text, and a double vermilion margin. */
+@utility ruled-paper {
+  --rule: color-mix(in oklch, var(--foreground) 11%, transparent);
+  --margin: color-mix(in oklch, var(--vermilion) 55%, transparent);
+  background-image:
+    linear-gradient(to right, transparent 2.25rem, var(--margin) 2.25rem, var(--margin) calc(2.25rem + 1px), transparent calc(2.25rem + 1px), transparent calc(2.25rem + 4px), var(--margin) calc(2.25rem + 4px), var(--margin) calc(2.25rem + 5px), transparent calc(2.25rem + 5px)),
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(1.75rem - 1px), var(--rule) calc(1.75rem - 1px), var(--rule) 1.75rem);
+  background-position: 0 0, 0 0.75rem;
+  background-attachment: local;
 }
 
 /* Wordmark glitch: a short burst on hover, never repeating. */
