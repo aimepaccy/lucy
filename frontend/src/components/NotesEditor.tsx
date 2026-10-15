@@ -39,6 +39,7 @@ export function NotesEditor({ value, onChange, className }: NotesEditorProps) {
       title="Notes"
       description="Teaching points, mnemonics, anything the teacher stressed."
       className={className}
+      mended
       aside={
         <span className="overflow-hidden text-xs text-muted-foreground tabular-nums">
           <AnimatePresence mode="popLayout" initial={false}>

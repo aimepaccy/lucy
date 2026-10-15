@@ -150,7 +150,7 @@ export function GenerateBar({
 
   return (
     <motion.div variants={rise} className="sticky bottom-4 z-20">
-      <div className="rounded-2xl border bg-card/95 p-3 shadow-lg backdrop-blur-xl sm:p-4">
+      <div className="hand-radius border bg-card/95 p-3 shadow-lg backdrop-blur-xl sm:p-4">
         <p role="status" className="sr-only">
           {announcement}
         </p>

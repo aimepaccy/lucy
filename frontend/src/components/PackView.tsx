@@ -53,6 +53,7 @@ export function PackView({ record, save }: PackViewProps) {
   return (
     <motion.div initial="hidden" animate="show">
       <Panel
+        mended
         icon={BookOpenCheck}
         title={pack.title}
         description={

@@ -18,7 +18,7 @@ export function Header({ theme, onThemeChange, actions }: HeaderProps) {
       <div className="flex items-center gap-3">
         <LucyMark className="size-9 drop-shadow-sm" />
         <div>
-          <p className="text-lg leading-none font-semibold tracking-tight">Lucy</p>
+          <p className="font-ink text-xl leading-none font-semibold">Lucy</p>
           <p className="mt-1 text-xs text-muted-foreground">Study packs from teaching rounds</p>
         </div>
       </div>

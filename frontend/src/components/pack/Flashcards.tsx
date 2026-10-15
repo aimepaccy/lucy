@@ -2,6 +2,7 @@ import { useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight, RotateCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { KintsugiSeam } from '@/components/Kintsugi'
 import { Source } from '@/components/pack/Source'
 import { spring } from '@/lib/motion'
 import { cn } from '@/lib/utils'
@@ -46,7 +47,9 @@ export function Flashcards({ cards }: { cards: Flashcard[] }) {
 
       {/* The card turns around its vertical axis; each face hides when it faces away.
           The key makes each card a new button, so the next card never shows its answer while turning back. */}
-      <div className="mx-auto w-full max-w-xl [perspective:1200px]">
+      <div className="relative mx-auto w-full max-w-xl [perspective:1200px]">
+        {/* A second card peeking out behind, like a stack of index cards. */}
+        <span aria-hidden="true" className="absolute inset-0 rotate-[1.6deg] rounded-md border bg-card/80 shadow-sm" />
         <motion.button
           key={index}
           ref={(node) => {
@@ -62,14 +65,14 @@ export function Flashcards({ cards }: { cards: Flashcard[] }) {
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0, rotateY: flipped ? 180 : 0 }}
           transition={spring}
-          className="relative grid min-h-56 w-full cursor-pointer rounded-xl outline-none [transform-style:preserve-3d] focus-visible:ring-[3px] focus-visible:ring-ring/50"
+          className="relative grid min-h-60 w-full cursor-pointer rounded-md outline-none [transform-style:preserve-3d] focus-visible:ring-[3px] focus-visible:ring-ring/50"
         >
           <Face>
-            <span className="text-xs font-medium tracking-wide text-primary uppercase">Question</span>
-            <span className="block text-lg font-medium text-balance">{card.front}</span>
+            <Label>Question</Label>
+            <span className="block font-ink text-xl font-medium text-balance">{card.front}</span>
           </Face>
           <Face back>
-            <span className="text-xs font-medium tracking-wide text-primary uppercase">Answer</span>
+            <Label>Answer</Label>
             <span className="block text-lg text-balance">{card.back}</span>
             <Source quote={card.quote} grounded={card.grounded} />
           </Face>
@@ -117,11 +120,19 @@ function Face({ back = false, children }: { back?: boolean; children: ReactNode 
   return (
     <span
       className={cn(
-        'col-start-1 row-start-1 flex flex-col items-center justify-center gap-3 rounded-xl border bg-background/70 p-6 text-center shadow-sm backface-hidden',
+        'index-card relative col-start-1 row-start-1 flex flex-col items-center justify-center gap-3 overflow-hidden rounded-md border bg-card px-6 pt-14 pb-8 text-center shadow-md backface-hidden',
         back && '[transform:rotateY(180deg)]',
       )}
     >
       {children}
+      <KintsugiSeam variant="corner" className="absolute -right-px -bottom-px h-7 w-12 -scale-x-100 -scale-y-100" />
     </span>
+  )
+}
+
+// Sits in the header band above the card's first rule.
+function Label({ children }: { children: ReactNode }) {
+  return (
+    <span className="absolute top-3.5 left-5 text-xs font-medium tracking-wide text-primary uppercase">{children}</span>
   )
 }
