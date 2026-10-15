@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { AlertCircle, BookOpenCheck, Check, Download, Layers, Library, ListChecks, Loader2, NotebookText } from 'lucide-react'
 import { Tabs } from 'radix-ui'
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useReading } from '@/hooks/use-reading'
 import { downloadFile, exportName } from '@/lib/download'
+import { revealPack } from '@/lib/reveal'
 import { exportBlob, type SavedPack } from '@/lib/storage'
 
 export type SaveStatus = { status: 'saving' } | { status: 'saved' } | { status: 'failed'; message: string }
@@ -24,7 +25,6 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', tim
 
 export function PackView({ record, save }: PackViewProps) {
   const { pack } = record
-  const startRef = useRef<HTMLDivElement>(null)
   const [tab, setTab] = useState('summary')
   const reading = useReading()
 
@@ -37,10 +37,11 @@ export function PackView({ record, save }: PackViewProps) {
     }
   }
 
-  // Bring the new pack into view and tell screen reader users it has arrived, unless the student is typing.
+  // Scroll down to the new pack and tell screen reader users it has arrived, unless the student is typing:
+  // pulling the page away mid-sentence would lose their place.
   useEffect(() => {
     const active = document.activeElement
-    if (!(active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement)) startRef.current?.focus()
+    if (!(active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement)) revealPack()
   }, [pack])
 
   const tabs = [
@@ -51,7 +52,7 @@ export function PackView({ record, save }: PackViewProps) {
   ]
 
   return (
-    <motion.div initial="hidden" animate="show">
+    <motion.div id="pack" initial="hidden" animate="show" className="scroll-mt-6">
       <Panel
         mended
         icon={BookOpenCheck}
@@ -86,7 +87,7 @@ export function PackView({ record, save }: PackViewProps) {
             </span>
           </p>
         )}
-        <div id="pack-start" ref={startRef} tabIndex={-1} role="region" aria-label={`Study pack: ${pack.title}`} className="outline-none">
+        <div id="pack-start" tabIndex={-1} role="region" aria-label={`Study pack: ${pack.title}`} className="outline-none">
           {/* Radix gives the tabs their roles and arrow-key movement; we only style them. */}
           <Tabs.Root value={tab} onValueChange={openTab} className="flex flex-col gap-5">
             <Tabs.List aria-label="Parts of the study pack" className="flex gap-1 rounded-lg bg-muted p-1">

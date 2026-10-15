@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { downloadFile, exportName } from '@/lib/download'
 import { plural } from '@/lib/format'
 import { StorageError, deleteAllPacks, deletePack, exportBlob, listPacks, savePack, type SavedPack } from '@/lib/storage'
+import { revealPack } from '@/lib/reveal'
 
 type LibraryProps = {
   // Goes up by one each time App saves a pack, so an open list shows it.
@@ -175,7 +176,7 @@ export function Library({ version, onOpenPack, onDeleted, onDeletedAll }: Librar
             if (!openingPack.current) return
             openingPack.current = false
             event.preventDefault()
-            document.getElementById('pack-start')?.focus()
+            revealPack()
           }}
           className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l bg-card shadow-2xl outline-none data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:animate-in data-[state=open]:slide-in-from-right motion-reduce:animate-none"
         >
