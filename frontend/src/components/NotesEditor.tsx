@@ -81,7 +81,7 @@ export function NotesEditor({ value, onChange, className }: NotesEditorProps) {
           }}
           maxLength={MAX_CHARS}
           placeholder={'For example:\nCURB-65 for pneumonia severity\nAlways check inhaler technique before stepping up asthma treatment'}
-          className="washi-paper min-h-64 flex-1 resize-none bg-(--washi) py-3 pr-4 pl-12 text-[0.95rem] leading-7 shadow-sm md:text-[0.95rem] lg:min-h-96 dark:bg-(--washi)"
+          className="min-h-64 flex-1 resize-none bg-(--paper) px-4 py-3 text-[0.95rem] leading-7 shadow-sm md:text-[0.95rem] lg:min-h-96 dark:bg-(--paper)"
         />
         <Seal />
       </div>

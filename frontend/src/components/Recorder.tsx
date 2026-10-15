@@ -180,7 +180,8 @@ export function Recorder({ recording, onChange, onLiveChange }: RecorderProps) {
       <div className="mt-3 flex min-h-10 flex-col items-center gap-1 text-center">
         {view === 'idle' && (
           <p className="text-xs text-muted-foreground">
-            Ask everyone before you record. Keep the device near the people speaking.
+            Role-play only, never real patients. Ask everyone before you record, and keep the device near the people
+            speaking.
           </p>
         )}
         {view === 'live' && (
@@ -301,7 +302,7 @@ function Cassette({ label, wound, spinning }: { label: string; wound: number; sp
   return (
     <svg viewBox="0 0 240 132" className="w-full" aria-hidden="true">
       <rect x="2" y="2" width="236" height="128" rx="9" className="fill-card stroke-border" strokeWidth="2" />
-      <rect x="14" y="10" width="212" height="26" rx="3" className="fill-(--washi) stroke-border" />
+      <rect x="14" y="10" width="212" height="26" rx="3" className="fill-(--paper) stroke-border" />
       <line x1="22" y1="30" x2="218" y2="30" className="stroke-(--vermilion)" strokeOpacity="0.5" />
       <text x="24" y="25" className="fill-foreground font-ink text-[11px]">
         {label.length > 34 ? `${label.slice(0, 33)}…` : label}
@@ -375,7 +376,7 @@ function VuMeter({ active, readLevel }: { active: boolean; readLevel: () => numb
   const angle = -50 + 100 * (active ? level : 0)
 
   return (
-    <div className="relative flex-1 overflow-hidden rounded-lg border bg-(--washi) shadow-inner">
+    <div className="relative flex-1 overflow-hidden rounded-lg border bg-(--paper) shadow-inner">
       <svg viewBox="0 0 120 52" className="h-full w-full" aria-hidden="true">
         <path d="M 29.4 24.3 A 40 40 0 0 1 76.9 13.75" className="fill-none stroke-foreground/50" strokeWidth="1.2" />
         <path d="M 76.9 13.75 A 40 40 0 0 1 90.6 24.3" className="fill-none stroke-(--vermilion)" strokeWidth="2.5" />

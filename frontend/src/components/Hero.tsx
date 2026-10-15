@@ -1,5 +1,6 @@
 import { Fragment } from 'react'
 import { motion, useReducedMotion, type Variants } from 'motion/react'
+import { PixelText } from '@/components/PixelWordmark'
 import { rise } from '@/lib/motion'
 
 const words = ['Turn', 'a', 'teaching', 'round', 'into', 'a']
@@ -22,8 +23,9 @@ export function Hero() {
             </motion.span>{' '}
           </Fragment>
         ))}
-        <motion.span variants={rise} className="relative inline-block text-primary italic">
-          study pack.
+        <motion.span variants={rise} className="relative inline-block text-primary">
+          {/* Heights in multiples of 7px, so every pixel is the same size. */}
+          <PixelText text="study pack." cursor className="h-7 sm:h-[2.625rem]" />
           <BrushStroke still={still ?? false} />
         </motion.span>
       </h1>
@@ -48,9 +50,8 @@ function BrushStroke({ still }: { still: boolean }) {
         d="M4 15 C 60 9, 120 7, 180 10 S 270 14, 296 8"
         fill="none"
         stroke="currentColor"
-        strokeWidth="5"
+        strokeWidth="7"
         strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
         initial={{ pathLength: still ? 1 : 0, opacity: still ? 0.85 : 0 }}
         animate={{ pathLength: 1, opacity: 0.85 }}
         transition={{ duration: 0.9, delay: 0.75, ease: [0.65, 0, 0.35, 1] }}

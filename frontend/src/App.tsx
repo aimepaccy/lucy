@@ -182,7 +182,6 @@ export default function App() {
             }
           />
           <Hero />
-          <PrivacyNotice />
 
           <div className="grid gap-6 lg:grid-cols-5">
             <NotesEditor
@@ -235,6 +234,8 @@ export default function App() {
             onWrite={() => draft && handleWrite(draft)}
             onDismiss={() => setSendState({ status: 'idle' })}
           />
+
+          <PrivacyNotice />
 
           <footer className="flex flex-col items-center gap-3 pb-2">
             <KintsugiSeam className="h-3 w-56 opacity-80" />
