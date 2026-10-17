@@ -23,6 +23,21 @@ The anchor analogy for every session: the browser is the ward, Lucy's server is 
 
 ## 2. The browser side
 
+- **React** (fundamental): a library for building pages out of components. You describe what the page should look like for the current state; React does the redrawing. An observation chart that reprints itself from the latest values.
+- **Declarative vs imperative** (fundamental): "here is what it should look like" vs "do this, then this". React is declarative; the old way of changing pages box by box is imperative.
+- **Component** (fundamental): a reusable piece of the page that knows how to draw itself. A form template, filled in differently each time it is used. One per file in `frontend/src/components/`; `App` holds them all.
+- **JSX**: the HTML-looking code inside TypeScript. `<Header theme={theme} />` means "draw a Header, with its `theme` slot filled in".
+- **Props** (fundamental): what a parent hands a child: information and phone numbers (functions to call). The child reads them but cannot change them. `theme` and `onChange` in `ThemeToggle.tsx`
+- **State** (fundamental): a component's own memory, which changes over time; changing it makes React redraw what depends on it. `theme` and `notes` in `App.tsx`, `cleared` in `NotesEditor.tsx`
+- **Redraw (re-render)**: React drawing a component again after its state or props change.
+- **Data down, events up** (fundamental): state flows down as props; children report what happened by calling the function they were given. "Down go data and phone numbers, up go phone calls." The theme button: `App` → `Header` → `ThemeToggle`, and the click back up.
+- **Event, event handler**: something that happened (a click, a keystroke) and the function that runs when it does (`onClick`, `onChange`).
+- **Lifting state up** (fundamental): keep state in the nearest common parent of every component that needs it, and no higher. `notes` lives in `App` because the editor, the word meter, the draft saver and Generate all need it; the Undo clear text stays in `NotesEditor`.
+- **Controlled component** (fundamental): an input box that shows exactly what state says and reports every change up. A secretary typing only what the doctor dictates. The notes `Textarea` in `NotesEditor.tsx`. A broken `onChange` gives a box you cannot type in.
+- **Derived state** (fundamental): anything that can be calculated from state is calculated on every redraw, never stored. BMI from weight and height. `countWords(value)` in `NotesEditor.tsx`, `busy` in `App.tsx`
+- **Hook**: a function whose name starts with `use` that gives a component a power such as memory (`useState`) or a side job (`useEffect`); Lucy's own hooks are in `frontend/src/hooks/`. Details in a later session.
+- **Premature optimisation**: making code faster before measuring whether it is slow. Usually costs clarity for nothing.
+
 ## 3. Across the wire
 
 - **Path**: the part of an address after the server, such as `/api/limits`. Matched exactly, letter by letter.
