@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-10-13
+Last updated: 2026-10-17
 
 ## Status
 Phase 0 (setup) done. Groq key checked and valid; `backend/.env` complete.
@@ -27,7 +27,7 @@ Phase 7 (history in the browser) done on 2026-10-13: every pack is saved automat
 
 ## Next
 0. **Building paused; learning sessions instead** (agreed 2026-10-13; first session 2026-10-14). Follow one click from Generate to a pack on screen, one layer per session:
-   1. The whole map: client, server, request, response, API, JSON; one diagram drawn from memory.
+   1. ~~The whole map~~: done 2026-10-17 (ward and lab analogy, live 200 and 404, the journey of one click). Still to do from it: Rugimbana draws the map from memory at the start of session 2.
    2. The browser side (React): components, props, state, data down and events up, controlled components, derived state.
    3. Across the wire: HTTP methods and status codes, REST, JSON vs multipart uploads, polling, CORS.
    4. The server: FastAPI routes, Pydantic validation, background jobs, why uploads are deleted.
@@ -40,6 +40,7 @@ Phase 7 (history in the browser) done on 2026-10-13: every pack is saved automat
    - Not done from the phase 7 reviews, on purpose: a forged file reusing the id of a pack not yet imported is skipped as "already here" (the attacker needs your own export); a finished write replaces a pack opened from My packs; a second deletion ends the first one's undo; other open tabs are not told when packs change (they re-read when the drawer opens; a `BroadcastChannel` would fix it).
    - Not done from the review, on purpose: the NCBI `email` parameter (needs a non-personal project address; ask Rugimbana), and sharing one lookup between two students asking for the same new term at once (not needed at demo scale).
 1. Carry-overs to their phases:
+   - Phase 8: the slide box keeps its own `MAX_FILES = 5` and `MAX_MB = 25` (`SlideDropZone.tsx`) instead of reading `/api/limits`, so a server change would only show up as a refusal on Generate (found in learning session 1). Read them from `useLimits`, keeping the built-in values as a fallback.
    - Phase 4: the LLM goes through the same provider layer; the test stand-in pattern applies (no test calls the real provider).
    - Phase 5: replace the Generate receipt with real states; compare polling with streaming. Every keystroke in the review panel redraws the whole page (draft lives in `App`); measure on a long transcript and use `memo` if it feels slow.
    - Decide (Rugimbana): longer sessions. About 1,591 words (roughly 12 to 13 minutes of talk) fit in one pack on Groq's free tier. Options: chunk on Groq (slower, stays on Groq) or switch to a provider with higher limits such as Gemini (a `.env` change; free-tier data may be used for training, acceptable for role-play only).
