@@ -13,6 +13,7 @@ Two equal aims:
 Building is paused after phase 7. The project had moved faster than understanding (aim 2), and long build sessions were tiring. Lucy sessions are now learning sessions that follow one click (Generate) through every layer, using Lucy's own code as the textbook. Plan and order in `PROGRESS.md` (Next). Each session:
 - About 45 to 60 minutes; stop when Rugimbana is tired.
 - Beginner style: everyday analogy, then the term, then the real file in Lucy.
+- Beyond Lucy: each fundamental also gets a short general view (what it is across the industry, where else it shows up, common misunderstandings), so the knowledge is not tied to Lucy (asked for on 2026-10-18).
 - **Predict, don't retype:** show a few lines, ask what a change would do, then run it and see.
 - Say which concepts are fundamentals to master and which are details to look up.
 - Close with two or three explain-back questions, a `LEARNING.md` entry, and new terms added to `docs/glossary.md`.

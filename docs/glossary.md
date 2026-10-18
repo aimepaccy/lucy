@@ -37,6 +37,7 @@ The anchor analogy for every session: the browser is the ward, Lucy's server is 
 - **Derived state** (fundamental): anything that can be calculated from state is calculated on every redraw, never stored. BMI from weight and height. `countWords(value)` in `NotesEditor.tsx`, `busy` in `App.tsx`
 - **Hook**: a function whose name starts with `use` that gives a component a power such as memory (`useState`) or a side job (`useEffect`); Lucy's own hooks are in `frontend/src/hooks/`. Details in a later session.
 - **Premature optimisation**: making code faster before measuring whether it is slow. Usually costs clarity for nothing.
+- **StrictMode**: in development only, React runs each component's start-up work twice to expose hidden bugs; that is why `limits` appears twice in the Network tab. `frontend/src/main.tsx`
 
 ## 3. Across the wire
 
@@ -47,8 +48,35 @@ The anchor analogy for every session: the browser is the ward, Lucy's server is 
 - **404 Not Found**: no such thing here: a wrong address, or a job the server no longer knows.
 - **422 Unprocessable Content**: the form is filled in wrong (too many slide files, notes too long).
 - **No answer at all**: the server could not be reached (down, restarting, Wi-Fi drop). There is no status code because no response came back. In `api.ts` this is `status === null`.
-- **GET vs POST** (fundamental): GET asks for something and changes nothing; POST sends something to the server. Details in session 3.
-- **Polling**: asking "is it ready yet?" on a timer; Lucy asks every 1.5 seconds. `waitForJob` in `api.ts`
+- **GET vs POST** (fundamental): GET asks for something and changes nothing, so it is safe to repeat (polling sends the same GET again and again); POST sends something for the server to act on, and sending it twice can do the work twice.
+- **PUT, PATCH, DELETE**: replace, update or remove something that exists. Lucy uses none of them.
+- **Polling**: asking "is it ready yet?" on a timer; Lucy asks every 1.5 seconds, so a 6-second pack shows about 4 checks. `waitForJob` in `api.ts`
+- **HTTP** (fundamental): the agreed format for messages between client and server. A protocol: agreed rules for a conversation, like SBAR for handovers.
+- **Request line**: the first line of a request: method, path, protocol version (`GET /api/limits HTTP/1.1`).
+- **Headers** (fundamental): labels on the outside of the envelope: what is inside, what formats are accepted, who sent it.
+- **Body**: the letter inside the envelope. A GET has none.
+- **Content-Type** (fundamental): the header saying what the body is, such as `application/json` or `multipart/form-data`.
+- **REST** (fundamental): a style of API with nouns in the paths (`/api/packs`, `/api/jobs/{id}`), verbs as methods, and JSON in the bodies. A convention, not a law.
+- **405 Method Not Allowed**: right address, wrong verb (`GET /api/packs`).
+- **413 Content Too Large**: too big. Lucy uses it when the material is over the word budget.
+- **422, two kinds**: Lucy's own rule written by hand ("nothing to write a study pack from"), or the automatic shape check before Lucy's code runs (`{"notes": 5}`, or a job ID that is not 32 hex characters).
+- **429 Too Many Requests**: slow down. A 4xx that heals with time: the request was fine, just too soon. Groq sends it to Lucy when the per-minute limit is reached.
+- **500 / 503**: the server's code broke / the server is overloaded or down for now. Retrying later may work.
+- **4xx vs 5xx in practice** (fundamental): 4xx, change the request (except 429: wait); 5xx, retry later.
+- **Exponential backoff**: retrying after waiting longer each time (1 s, 2 s, 4 s), so a jammed service is not jammed further. The `openai` library does it for Lucy (`max_retries=2` in `providers.py`), then Lucy tells the student to try again in a minute.
+- **Regular expression (regex)**: a pattern for text, such as `^[0-9a-f]{32}$` (exactly 32 characters from 0-9 and a-f). Look up when needed.
+- **Binary vs text**: a recording or PDF is raw bytes, not letters, so it cannot go into JSON as it is.
+- **Base64**: a way to write bytes as text; makes them about a third bigger.
+- **Multipart (`multipart/form-data`)** (fundamental): one request with separate labelled compartments, so text and files travel together. A sample bag with sealed pockets. Stage 1 (`sendSession` in `api.ts`).
+- **Boundary**: the unique marker separating the compartments. The browser chooses it and writes the `Content-Type` header itself.
+- **URL encoding**: how special characters are written in an address; a space becomes `%20`.
+- **Developer tools, Network tab** (fundamental as a habit): F12 in the browser; lists every request with its method, status, headers, payload and response. The first place to look when a page misbehaves. The **Initiator** column shows what made each request.
+- **Origin** (fundamental): scheme + host + port. `http://localhost:5173` and `http://localhost:8000` are different origins.
+- **Same-origin policy** (fundamental): the browser's rule that a page may not read answers from another origin unless that origin allows it. Stops a dodgy site from reading your bank through your logged-in browser.
+- **CORS (Cross-Origin Resource Sharing)** (fundamental): how a server names the origins allowed to read its answers. Enforced by the browser, not the server: `curl` and scripts ignore it, so it is not a lock on the API. The sign "results to Ward 5173 only", obeyed by honest porters. `CORSMiddleware` in `backend/app/main.py`
+- **Preflight (OPTIONS)**: the browser phoning ahead before a non-simple request (`POST /api/packs` with `Content-Type: application/json`). Simple requests (GETs, form-style POSTs such as multipart) go straight out.
+- **Access-Control-Max-Age**: how long the browser may remember a preflight answer; Lucy says 600 seconds, so a second pack within 10 minutes shows no OPTIONS row.
+- **Proxy**: a go-between that forwards requests. A development proxy would have hidden CORS; Lucy calls the server directly so CORS is met on purpose.
 
 ## 4. The server
 
@@ -59,3 +87,4 @@ The anchor analogy for every session: the browser is the ward, Lucy's server is 
 ## 7. Testing and security
 
 - **Never trust the client** (fundamental): checks in the page are a courtesy (quick feedback); checks on the server are the safety, because anyone can send requests without the page. Both exist for the slide limit: `SlideDropZone.tsx` and `routes.py`.
+- **Browser extensions**: run inside every page and can send requests of their own (a Google Fonts request appeared in Lucy's Network tab that Lucy's code never makes). We control Lucy's code, not the visitor's browser.

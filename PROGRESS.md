@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-10-17
+Last updated: 2026-10-18
 
 ## Status
 Phase 0 (setup) done. Groq key checked and valid; `backend/.env` complete.
@@ -29,7 +29,7 @@ Phase 7 (history in the browser) done on 2026-10-13: every pack is saved automat
 0. **Building paused; learning sessions instead** (agreed 2026-10-13; first session 2026-10-14). Follow one click from Generate to a pack on screen, one layer per session:
    1. ~~The whole map~~: done 2026-10-17 (ward and lab analogy, live 200 and 404, the journey of one click). Still to do from it: Rugimbana draws the map from memory at the start of session 2.
    2. ~~The browser side (React)~~: done 2026-10-17 (theme button for data down and events up, notes for lifting state up, controlled components and derived state). Open: the keystroke-to-counter trace (the count is derived, not state), to be retold at the start of session 3.
-   3. Across the wire: HTTP methods and status codes, REST, JSON vs multipart uploads, polling, CORS.
+   3. ~~Across the wire~~: done 2026-10-18 (curl and Edge Network tab: methods, status codes, REST, JSON vs multipart, polling counted, CORS and preflight seen live). Open: who phones ahead and why (the browser, because of the JSON form type, not the "seriousness" of the request), to be retold at the start of session 4.
    4. The server: FastAPI routes, Pydantic validation, background jobs, why uploads are deleted.
    5. The AI layer: tokens vs context window vs rate limits vs quota units, temperature, structured output, hallucination and grounding, prompt injection.
    6. Storage and data ownership: the phase 7 walkthrough and explain-back.
@@ -45,7 +45,10 @@ Phase 7 (history in the browser) done on 2026-10-13: every pack is saved automat
    - Phase 5: replace the Generate receipt with real states; compare polling with streaming. Every keystroke in the review panel redraws the whole page (draft lives in `App`); measure on a long transcript and use `memo` if it feels slow.
    - Decide (Rugimbana): longer sessions. About 1,591 words (roughly 12 to 13 minutes of talk) fit in one pack on Groq's free tier. Options: chunk on Groq (slower, stays on Groq) or switch to a provider with higher limits such as Gemini (a `.env` change; free-tier data may be used for training, acceptable for role-play only).
    - Phase 10: the inline theme script in `index.html` needs a hash in the Content Security Policy; test the animated background on a low-end phone or laptop. Deploy installs from `requirements.txt` (runtime only). An early 413 during a large upload may show as "could not reach its server". The microphone needs https. Test recording on Safari or an iPhone, then decide on the MP4 brand check. Jobs live in one process's memory: run a single worker, or move jobs to shared storage; cap concurrent jobs; uvicorn access logs record job ids. Add a time limit for parsing hostile PDFs. `/api/packs` is open: add the access code, a per-address rate limit, and allow one write at a time (429 "Lucy is busy"), since two writes in a minute already exceed 8,000 tokens. Windows `--reload` sometimes fails to restart the server: restart by hand if the API looks out of date. `/api/reading` is open too: the access code and per-address rate limit should cover it (anyone could spend the NCBI allowance from our server). uvicorn access logs record reading search terms (topics only). The NCBI queue and the YouTube catalogue assume one worker process. Packs and notes share the browser storage of their origin: host Lucy on its own origin (its own subdomain, not a path on a shared `user.github.io`) and add a Content Security Policy (`default-src 'self'`, `connect-src` limited to the API). Free hosts have no lasting disk: the YouTube catalogue is fetched again after each restart (about 80 units), fine within 10,000 a day.
-2. Revisit with Rugimbana: tokens vs quota units vs rate limits, and why answers with a failed source are not cached (phase 6 explain-back); CORS (still pending); test stand-ins (data down and events up, controlled components and derived state were covered in learning session 2); phase 8 will need its own history trimming (the model is stateless; the chat resends history).
+2. Revisit with Rugimbana: tokens vs quota units vs rate limits, and why answers with a failed source are not cached (phase 6 explain-back); test stand-ins (data down and events up, controlled components and derived state were covered in learning session 2); phase 8 will need its own history trimming (the model is stateless; the chat resends history).
+
+## User feedback
+- 2026-10-18: shown to a classmate (one-on-one, notes-only); she found it useful and said it could help students. Add what was useful or confusing at the next demo.
 
 ## Blockers
 None.
