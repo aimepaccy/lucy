@@ -51,7 +51,7 @@ Also introduce one or two AI-tool features per phase (skills, subagents, MCP ser
 ```
 frontend/   React app (phase 1)
 backend/    FastAPI app, .env (not in git), .env.example
-docs/       plan.md, design notes
+docs/       plan.md, glossary.md, ideas.md (long-term backlog), design notes
 ```
 
 ## Environment

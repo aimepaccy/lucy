@@ -51,6 +51,9 @@ Phase 7 (history in the browser) done on 2026-10-13: every pack is saved automat
 ## User feedback
 - 2026-10-18: shown to a classmate (one-on-one, notes-only); she found it useful and said it could help students. Add what was useful or confusing at the next demo.
 
+## Ideas
+Long-term ideas live in `docs/ideas.md` (accounts, organising packs, reminders, simulation debriefs, small technical fixes). Add or remove freely.
+
 ## Blockers
 None.
 
