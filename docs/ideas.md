@@ -30,6 +30,20 @@ Record a simulation session (audio, perhaps later video) and get a structured de
 - Lucy supports the facilitator's debrief; it does not grade students.
 - Video needs a model that can watch video and is much heavier to process; start with audio.
 
+### Teach from credible sources (retrieval-augmented generation)
+Lucy finds relevant passages in a trusted library (StatPearls, WHO and national guidelines) and gives them to the AI with the session, so the pack teaches around what was discussed instead of only reporting it. Context also helps resolve mishearings ("asinaa" next to "wheeze" and "salbutamol" is asthma).
+- Two labelled voices: "From your session" (quoted and checked) and "From [source]" (cited). Never blend them; local guidance taught on the ward can differ from international sources, and the student should see the difference.
+- Choosing the library is a clinical governance decision: open sources only (paid ones cannot be used), local before international.
+- Retrieved passages cost tokens, which shortens the session that fits on the free tier.
+- Corrections of misheard words stay visible ("heard as 'asinaa'").
+- Phase 8's chat needs retrieval too; build the two together.
+
+### Curriculum coverage
+Compare what was discussed with a curriculum, week by week, and show the gaps.
+- Start with the student: "this rotation you have covered 12 of 30 curriculum topics; not yet seen: ...". Private, no server needed, fits "organise by rotation".
+- An institutional report is a different product: it needs content from many students on a server, consent from every teacher, ethics approval and role-based access. Reports must be opt-in, anonymised and topic-level, never about a named teacher.
+- Selection bias: a report only sees what students chose to record, so a "gap" may mean nobody pressed record.
+
 ## Small technical fixes (found in learning sessions)
 - Make the pack request strict (`extra='forbid'` on `PackRequest`), so a misspelled field fails loudly instead of silently dropping the transcript.
 - Generate the front end's `types.ts` from the server's OpenAPI file, so the two cannot drift apart.
