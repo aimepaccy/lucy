@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-10-18
+Last updated: 2026-10-20
 
 ## Status
 Phase 0 (setup) done. Groq key checked and valid; `backend/.env` complete.
@@ -30,7 +30,7 @@ Phase 7 (history in the browser) done on 2026-10-13: every pack is saved automat
    1. ~~The whole map~~: done 2026-10-17 (ward and lab analogy, live 200 and 404, the journey of one click). Still to do from it: Rugimbana draws the map from memory at the start of session 2.
    2. ~~The browser side (React)~~: done 2026-10-17 (theme button for data down and events up, notes for lifting state up, controlled components and derived state). Open: the keystroke-to-counter trace (the count is derived, not state), to be retold at the start of session 3.
    3. ~~Across the wire~~: done 2026-10-18 (curl and Edge Network tab: methods, status codes, REST, JSON vs multipart, polling counted, CORS and preflight seen live). Open: who phones ahead and why (the browser, because of the JSON form type, not the "seriousness" of the request), to be retold at the start of session 4.
-   4. The server: FastAPI routes, Pydantic validation, background jobs, why uploads are deleted.
+   4. ~~The server~~: done 2026-10-20 (four stations, middleware order, Pydantic in and out, `/docs`, jobs and job states, transport vs job-level errors, three layers of deletion). Open for session 5 warm-up: files are deleted when the job ends, results within 15 minutes; who polls whom (the browser polls Lucy; Lucy calls Groq).
    5. The AI layer: tokens vs context window vs rate limits vs quota units, temperature, structured output, hallucination and grounding, prompt injection.
    **Before session 6: build automatic packs from recordings** (Rugimbana's idea and call, 2026-10-18; the one feature built during the pause). A recording no longer stops for a full transcript review: after transcription the pack is written straight away, and the transcript is shown below the flashcards for anyone who wants it. Kept simple for the MVP. Remind Rugimbana at the end of session 5.
    6. Storage and data ownership: the phase 7 walkthrough and explain-back.
