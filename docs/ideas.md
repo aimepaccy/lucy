@@ -6,6 +6,16 @@ Already scheduled, so not repeated here: automatic packs from recordings (before
 
 ## Features
 
+### Priority: teach from credible sources (retrieval-augmented generation)
+The core idea of Lucy: it teaches students from what the consultant taught on the round. It does not just report the exact words (or the jokes). Retrieval fits that idea: the session is the spine, trusted sources give the depth.
+
+Lucy finds relevant passages in a trusted library (StatPearls, WHO and national guidelines) and gives them to the AI with the session, so the pack teaches around what was discussed instead of only reporting it. Context also helps resolve mishearings ("asinaa" next to "wheeze" and "salbutamol" is asthma).
+- Two labelled voices: "From your session" (quoted and checked) and "From [source]" (cited). Never blend them; local guidance taught on the ward can differ from international sources, and the student should see the difference.
+- Choosing the library is a clinical governance decision: open sources only (paid ones cannot be used), local before international.
+- Retrieved passages cost tokens, which shortens the session that fits on the free tier.
+- Corrections of misheard words stay visible ("heard as 'asinaa'").
+- Phase 8's chat needs retrieval too; build the two together.
+
 ### Student accounts
 Each student signs in and finds their packs on any device.
 - Changes a founding decision: study content would be stored on a server, not only in the browser. Needs a privacy design (what is stored, where, for how long, who can see it, how to delete it) before any code.
@@ -30,18 +40,11 @@ Record a simulation session (audio, perhaps later video) and get a structured de
 - Lucy supports the facilitator's debrief; it does not grade students.
 - Video needs a model that can watch video and is much heavier to process; start with audio.
 
-### Teach from credible sources (retrieval-augmented generation)
-Lucy finds relevant passages in a trusted library (StatPearls, WHO and national guidelines) and gives them to the AI with the session, so the pack teaches around what was discussed instead of only reporting it. Context also helps resolve mishearings ("asinaa" next to "wheeze" and "salbutamol" is asthma).
-- Two labelled voices: "From your session" (quoted and checked) and "From [source]" (cited). Never blend them; local guidance taught on the ward can differ from international sources, and the student should see the difference.
-- Choosing the library is a clinical governance decision: open sources only (paid ones cannot be used), local before international.
-- Retrieved passages cost tokens, which shortens the session that fits on the free tier.
-- Corrections of misheard words stay visible ("heard as 'asinaa'").
-- Phase 8's chat needs retrieval too; build the two together.
-
-### Curriculum coverage
-Compare what was discussed with a curriculum, week by week, and show the gaps.
-- Start with the student: "this rotation you have covered 12 of 30 curriculum topics; not yet seen: ...". Private, no server needed, fits "organise by rotation".
-- An institutional report is a different product: it needs content from many students on a server, consent from every teacher, ethics approval and role-based access. Reports must be opt-in, anonymised and topic-level, never about a named teacher.
+### Curriculum coverage (secondary, after retrieval)
+Compare what was discussed with a curriculum and show the overall picture, never pointing at a person: for example, internal medicine has 30 topics; 10 were discussed a lot, 3 hardly at all.
+- Topic-level only, across many sessions, with no teacher named.
+- Start with the student's own view ("this rotation you have covered 12 of 30 topics; not yet seen: ..."), which needs no server and fits "organise by rotation".
+- An institutional view needs content from many students on a server, consent, ethics approval and role-based access; reports opt-in and anonymised.
 - Selection bias: a report only sees what students chose to record, so a "gap" may mean nobody pressed record.
 
 ## Small technical fixes (found in learning sessions)
