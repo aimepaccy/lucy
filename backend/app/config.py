@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # Comma-separated list of front-end addresses allowed to call this API.
     allowed_origins: str = 'http://localhost:5173'
-    max_request_mb: int = 160
+    max_request_mb: int = 240
 
     # Any OpenAI-compatible provider. SecretStr keeps the key out of logs and error messages.
     llm_base_url: str = 'https://api.groq.com/openai/v1'

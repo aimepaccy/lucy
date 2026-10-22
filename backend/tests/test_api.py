@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from PIL import Image
 from pptx import Presentation
 
-from app import jobs, providers
+from app import extract, jobs, providers
 from app.limits import BodySizeLimit
 from app.main import app
 from tests.conftest import FAKE_HANDWRITING, FAKE_TRANSCRIPT
@@ -191,6 +191,34 @@ def test_the_agreed_word_for_no_handwriting_means_empty():
     assert providers.handwriting_from('Pred 40 mg x5 days') == 'Pred 40 mg x5 days'
     # The word inside real notes is kept.
     assert providers.handwriting_from('Wheeze: none at rest') == 'Wheeze: none at rest'
+    # Thinking cut off before its closing tag never reaches the notes.
+    assert providers.handwriting_from('<think>The first line says') == ''
+
+
+def test_a_page_cut_short_gets_its_own_warning(monkeypatch):
+    def read(jpeg):
+        raise providers.PhotoCutShort('The page has more writing than can be read in one go.')
+
+    monkeypatch.setattr(providers, 'read_handwriting', read)
+    state = finished_job(post(photos=[('dense.jpg', photo())]))
+    assert state['status'] == 'done'
+    assert state['materials']['warnings'] == [
+        'dense.jpg has too much writing to read at once. Try half a page per photo.'
+    ]
+
+
+def test_photo_with_too_many_pixels_is_refused_before_decoding(monkeypatch, fake_read_handwriting):
+    monkeypatch.setattr(extract, 'MAX_PHOTO_PIXELS', 100 * 100)
+    state = finished_job(post(photos=[('huge.jpg', photo(size=(101, 100)))]))
+    assert fake_read_handwriting == []
+    assert state['materials']['warnings'] == ['huge.jpg could not be read as a photo.']
+
+
+def test_photo_taken_sideways_is_turned_upright(fake_read_handwriting):
+    exif = Image.Exif()
+    exif[0x0112] = 6  # Orientation: the camera was held on its side.
+    finished_job(post(photos=[('sideways.jpg', photo(size=(400, 300), exif=exif))]))
+    assert Image.open(io.BytesIO(fake_read_handwriting[0])).size == (300, 400)
 
 
 def test_damaged_photo_gets_a_warning_not_a_failure():

@@ -21,8 +21,9 @@ READ_NOTES = (
 )
 # Asked to reply with nothing, models write a sentence saying so instead; an agreed word is easier to spot.
 NO_HANDWRITING = 'NONE'
-# Some models that can read images think aloud first, between these tags.
-_THINKING = re.compile(r'<think>.*?</think>', re.DOTALL)
+# Some models that can read images think aloud first, between these tags. A reply cut off
+# mid-thought has no closing tag, so the thinking then runs to the end.
+_THINKING = re.compile(r'<think>.*?(</think>|$)', re.DOTALL)
 
 
 class ProviderError(Exception):
@@ -35,6 +36,10 @@ class InvalidOutput(ProviderError):
 
 class UnreadablePhoto(ProviderError):
     """The service turned down this one photo. The other photos can still be read."""
+
+
+class PhotoCutShort(UnreadablePhoto):
+    """The reply hit its length limit, so the page would come back with its end missing."""
 
 
 def _client(base_url: str, key: str, service: str) -> openai.OpenAI:
@@ -99,7 +104,10 @@ def read_handwriting(jpeg: bytes) -> str:
         raise UnreadablePhoto('The photo reading service could not read this photo.') from error
     except openai.APIError as error:
         raise _translate(error, 'photo reading') from error
-    return handwriting_from(response.choices[0].message.content or '')
+    choice = response.choices[0]
+    if choice.finish_reason == 'length':
+        raise PhotoCutShort('The page has more writing than can be read in one go.')
+    return handwriting_from(choice.message.content or '')
 
 
 def handwriting_from(answer: str) -> str:

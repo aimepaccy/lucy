@@ -41,7 +41,7 @@ export default function App() {
   // The pack on screen: just written, or opened from My packs. It stays until another replaces it.
   const [shown, setShown] = useState<{ record: SavedPack; save: SaveStatus } | null>(null)
   // What the last saved pack was written from, to tell whether a recording or corrections are only in memory.
-  const [savedFrom, setSavedFrom] = useState<{ draft: Materials; recording: Recording | null } | null>(null)
+  const [savedFrom, setSavedFrom] = useState<{ draft: Materials; recording: Recording | null; photos: NotePhoto[] } | null>(null)
   const [libraryVersion, setLibraryVersion] = useState(0)
   const generateRef = useRef<HTMLButtonElement>(null)
   // Each write gets a number. A write that finishes after the student moved on (closed the panel or
@@ -97,6 +97,7 @@ export default function App() {
     const update = (state: WriteState) => isLatest() && setWriteState(state)
     // The recording this pack comes from: the one Lucy read, since a changed recording means reading again.
     const source = recording
+    const sourcePhotos = photos
     update({ status: 'writing', step: 'Sending to Lucy' })
     let record: SavedPack
     try {
@@ -122,7 +123,7 @@ export default function App() {
     try {
       await savePack(record)
       save = { status: 'saved' }
-      setSavedFrom({ draft: materials, recording: source })
+      setSavedFrom({ draft: materials, recording: source, photos: sourcePhotos })
       setLibraryVersion((version) => version + 1)
       void askToKeepPacks()
     } catch (error) {
@@ -155,12 +156,13 @@ export default function App() {
   const showPanel = sendState.status === 'ready' && needsCheck(sendState.materials)
 
   // Ask before a reload or closed tab throws away work that exists only in this page: a job under way,
-  // a recording no saved pack was written from, or corrections made since the last saved pack.
-  // Notes need no warning: they are kept as a draft.
+  // a recording or photos no saved pack was written from, or corrections made since the last saved pack.
+  // Photos are not kept as a draft, since pictures of notes stay out of browser storage.
   const busy = sendState.status === 'sending' || sendState.status === 'working' || writeState.status === 'writing'
   const recordingAtRisk = recordingLive || (recording !== null && recording !== savedFrom?.recording)
+  const photosAtRisk = photos.length > 0 && photos !== savedFrom?.photos
   const correctionsAtRisk = corrected && draft !== savedFrom?.draft
-  useLeaveWarning(busy || recordingAtRisk || correctionsAtRisk)
+  useLeaveWarning(busy || recordingAtRisk || photosAtRisk || correctionsAtRisk)
 
   return (
     <MotionConfig reducedMotion="user">

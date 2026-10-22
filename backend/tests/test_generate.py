@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from app import generate, providers
 from app.main import app
-from app.schemas import PackDraft, PackRequest, SlideSource
+from app.schemas import MAX_TEXT_CHARS, PackDraft, PackRequest, SlideSource
 from tests.conftest import FAKE_NOTES, fake_pack
 
 # Kept before the stand-in replaces it, so a few tests can check what the real function sends.
@@ -59,8 +59,9 @@ def test_too_much_material_is_refused_before_any_ai_call(fake_writer):
     assert fake_writer['calls'] == []
 
 
-def test_notes_over_the_editor_limit_are_refused():
-    assert client.post('/api/packs', json={'notes': 'x' * 20_001}).status_code == 422
+def test_notes_over_the_text_limit_are_refused():
+    # Notes read from photos may pass the typed-notes limit, but not the limit for any text.
+    assert client.post('/api/packs', json={'notes': 'x' * (MAX_TEXT_CHARS + 1)}).status_code == 422
 
 
 def test_broken_answer_is_tried_once_more(fake_writer):

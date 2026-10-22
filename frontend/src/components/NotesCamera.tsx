@@ -121,7 +121,7 @@ export function NotesCamera({ room, onCapture, onClose }: NotesCameraProps) {
           <Camera /> Take photo
         </Button>
         <span className="flex-1 text-xs text-muted-foreground">
-          {room > 0 ? 'Hold the page flat, in good light, inside the corners.' : 'That is the most Lucy takes at once.'}
+          {room > 0 ? 'No patient details on the page. Hold it flat, in good light, inside the corners.' : 'That is the most Lucy takes at once.'}
         </span>
         <Button variant="outline" onClick={onClose}>
           Done

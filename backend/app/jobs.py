@@ -134,6 +134,9 @@ def _read_photos(photos: list[PhotoInput], warnings: list[str]) -> str | None:
         # A busy or unreachable service still fails the job; a turned-down photo only warns.
         try:
             text = providers.read_handwriting(jpeg)
+        except providers.PhotoCutShort:
+            warnings.append(f'{photo.name} has too much writing to read at once. Try half a page per photo.')
+            continue
         except providers.UnreadablePhoto:
             warnings.append(f'Lucy could not read {photo.name}. Try a clearer photo.')
             continue

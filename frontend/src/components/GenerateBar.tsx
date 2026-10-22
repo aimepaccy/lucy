@@ -81,9 +81,11 @@ export function GenerateBar({
     reviewing && !inputsChanged && limits !== null && packSize !== null && packSize.chars > limits.max_pack_chars
 
   // While the student reviews, the button writes the study pack, or reads again if the inputs changed.
-  const enabled = chips.length > 0 && !busy && !recordingLive && !tooLong
+  // Every photo or file failing leaves nothing to write from, so only reading again can help.
+  const nothingRead = reviewing && !inputsChanged && !hasReviewable(sendState.materials)
+  const enabled = chips.length > 0 && !busy && !recordingLive && !tooLong && !nothingRead
 
-  // Check is skipped when there is nothing to check (notes only).
+  // Check is skipped when there is nothing to check.
   const willCheck = reviewing ? needsCheck(sendState.materials) : recording !== null || slideCount > 0 || photoCount > 0
   const steps: StepKey[] = willCheck ? ['upload', 'read', 'check', 'write'] : ['upload', 'read', 'write']
 
@@ -136,10 +138,10 @@ export function GenerateBar({
     if (askingToReplace) return 'Reading again replaces your corrections. Press "Yes, read again" to continue, or keep editing above.'
     if (inputsChanged) {
       const loss = corrected ? '; this replaces your corrections' : ''
-      return `Your recording or slides changed after Lucy read them. Read again to include the changes${loss}.`
+      return `Your recording, photos or slides changed after Lucy read them. Read again to include the changes${loss}.`
     }
     if (writeState.status === 'done') return 'Your study pack is ready below. Correct the text above and write again if you need to.'
-    if (!hasReviewable(sendState.materials)) return 'Lucy has your notes and can write your study pack from them.'
+    if (nothingRead) return 'Lucy could not read anything from this material. See the notes above, then try clearer photos or another file.'
     return 'Lucy has read your material. Correct anything it got wrong above, then write your study pack.'
   }
 

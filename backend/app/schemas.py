@@ -71,7 +71,8 @@ class SlideSource(BaseModel):
 
 
 class PackRequest(BaseModel):
-    notes: str = Field('', max_length=MAX_NOTES_CHARS)
+    # Notes read from photos can run longer than typed notes; the word budget still applies.
+    notes: str = Field('', max_length=MAX_TEXT_CHARS)
     transcript: str | None = Field(None, max_length=MAX_TEXT_CHARS)
     slides: list[SlideSource] = Field(default_factory=list, max_length=5)
 
