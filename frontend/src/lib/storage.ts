@@ -1,7 +1,7 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
 import type { StudyPack } from '@/types'
 
-// Study packs live in this browser's IndexedDB, never on Lucy's server. Export is the student's backup copy.
+// Study packs live in this browser's IndexedDB, never on WardWise's server. Export is the student's backup copy.
 
 // The text a pack was written from (notes and the corrected transcript and slide text), kept with the pack
 // so the student keeps their own words, and so the chat in phase 8 can answer from them.
@@ -15,7 +15,7 @@ export type SavedPack = {
   format: 1
   id: string
   savedAt: string
-  // Imported packs were checked on another device, so Lucy says so rather than vouching for them.
+  // Imported packs were checked on another device, so WardWise says so rather than vouching for them.
   origin: 'written' | 'imported'
   pack: StudyPack
   material: PackMaterial
@@ -23,17 +23,18 @@ export type SavedPack = {
 
 export class StorageError extends Error {}
 
+// Named before the app became WardWise. Renaming it would strand every pack already saved.
 const DB_NAME = 'lucy'
 const DB_VERSION = 1
 
-interface LucyDB extends DBSchema {
+interface WardWiseDB extends DBSchema {
   packs: { key: string; value: SavedPack; indexes: { 'by-saved': string } }
 }
 
-let opening: Promise<IDBPDatabase<LucyDB>> | null = null
+let opening: Promise<IDBPDatabase<WardWiseDB>> | null = null
 
 function database() {
-  opening ??= openDB<LucyDB>(DB_NAME, DB_VERSION, {
+  opening ??= openDB<WardWiseDB>(DB_NAME, DB_VERSION, {
     upgrade(db, oldVersion) {
       if (oldVersion < 1) {
         const packs = db.createObjectStore('packs', { keyPath: 'id' })
@@ -48,7 +49,7 @@ function database() {
   return opening
 }
 
-export async function withDatabase<T>(work: (db: IDBPDatabase<LucyDB>) => Promise<T>): Promise<T> {
+export async function withDatabase<T>(work: (db: IDBPDatabase<WardWiseDB>) => Promise<T>): Promise<T> {
   try {
     return await work(await database())
   } catch (error) {
@@ -56,7 +57,7 @@ export async function withDatabase<T>(work: (db: IDBPDatabase<LucyDB>) => Promis
     if (error instanceof DOMException && error.name === 'QuotaExceededError') {
       throw new StorageError('This browser has no room left for study packs. Export and delete some older packs, then try again.')
     }
-    throw new StorageError("Lucy could not use this browser's storage. Private windows and some privacy settings can block it.")
+    throw new StorageError("WardWise could not use this browser's storage. Private windows and some privacy settings can block it.")
   }
 }
 
@@ -100,6 +101,6 @@ export async function askToKeepPacks() {
 // Export: the student's copy of their packs as one JSON file. Import is in import-packs.ts.
 
 export function exportBlob(records: SavedPack[]) {
-  const file = { app: 'lucy', format: 1, exportedAt: new Date().toISOString(), packs: records }
+  const file = { app: 'wardwise', format: 1, exportedAt: new Date().toISOString(), packs: records }
   return new Blob([JSON.stringify(file, null, 2)], { type: 'application/json' })
 }

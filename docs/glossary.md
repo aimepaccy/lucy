@@ -1,22 +1,22 @@
 # Glossary
 
-Terms from Lucy, in plain words, with where they show up in the code. Built session by session during the learning sessions; read it before a demo or a conversation with an engineer.
+Terms from WardWise, in plain words, with where they show up in the code. Built session by session during the learning sessions; read it before a demo or a conversation with an engineer.
 
-Each entry: the term, a one-line plain meaning, an everyday or clinical analogy where it helps, and the file in Lucy where it can be seen. Marked **(fundamental)** when worth mastering, otherwise a detail to look up.
+Each entry: the term, a one-line plain meaning, an everyday or clinical analogy where it helps, and the file in WardWise where it can be seen. Marked **(fundamental)** when worth mastering, otherwise a detail to look up.
 
 ## 1. The whole map
 
-The anchor analogy for every session: the browser is the ward, Lucy's server is the lab in another building, Groq is the reference lab the lab sends work out to.
+The anchor analogy for every session: the browser is the ward, WardWise's server is the lab in another building, Groq is the reference lab the lab sends work out to.
 
-- **Client** (fundamental): the program that asks. In Lucy, the page in the browser. The ward sending a request form. A role, not a machine: both can run on one laptop. `frontend/`
-- **Server** (fundamental): the program that waits for requests and answers them. In Lucy, the FastAPI program. The lab. `backend/app/main.py`
+- **Client** (fundamental): the program that asks. In WardWise, the page in the browser. The ward sending a request form. A role, not a machine: both can run on one laptop. `frontend/`
+- **Server** (fundamental): the program that waits for requests and answers them. In WardWise, the FastAPI program. The lab. `backend/app/main.py`
 - **Front end / back end** (fundamental): the part the user sees and touches (front) and the part that works behind the scenes (back). Usually the same as client and server.
 - **Request** (fundamental): one message from client to server asking for something. The request form. `frontend/src/lib/api.ts` (`request`)
 - **Response** (fundamental): the server's answer to one request: a status code, some headers, a body. The result slip.
 - **API** (Application Programming Interface) (fundamental): the list of requests a server accepts and how to make each one. The lab's test menu. `backend/app/routes.py`
 - **Endpoint** (fundamental): one entry on that menu, such as `GET /api/limits`. One test the lab offers. `@router.get('/limits')` in `routes.py`
-- **JSON** (fundamental): text with labelled values, `{"max_slide_files": 5}`. The standard result format both sides read, so Python (server) and TypeScript (page) can talk. Every response in Lucy is JSON, errors included.
-- **localhost**: "this same computer". Lucy's page runs at `localhost:5173`, its server at `localhost:8000`.
+- **JSON** (fundamental): text with labelled values, `{"max_slide_files": 5}`. The standard result format both sides read, so Python (server) and TypeScript (page) can talk. Every response in WardWise is JSON, errors included.
+- **localhost**: "this same computer". WardWise's page runs at `localhost:5173`, its server at `localhost:8000`.
 - **Port**: a numbered door on a computer; each program listens at its own. `API_URL` in `api.ts`
 - **Job, job ID** (fundamental): work the server does in the background after it has answered; the ID is the lab number used to ask about it later. `backend/app/jobs.py`
 - **Single source of truth** (fundamental): each fact lives in one place and everything else asks that place. The word meter asks the server for the word limit (`frontend/src/hooks/use-limits.ts`); the slide box keeps its own copy of "5 files" (`SlideDropZone.tsx`), which can drift from the server's.
@@ -35,7 +35,7 @@ The anchor analogy for every session: the browser is the ward, Lucy's server is 
 - **Lifting state up** (fundamental): keep state in the nearest common parent of every component that needs it, and no higher. `notes` lives in `App` because the editor, the word meter, the draft saver and Generate all need it; the Undo clear text stays in `NotesEditor`.
 - **Controlled component** (fundamental): an input box that shows exactly what state says and reports every change up. A secretary typing only what the doctor dictates. The notes `Textarea` in `NotesEditor.tsx`. A broken `onChange` gives a box you cannot type in.
 - **Derived state** (fundamental): anything that can be calculated from state is calculated on every redraw, never stored. BMI from weight and height. `countWords(value)` in `NotesEditor.tsx`, `busy` in `App.tsx`
-- **Hook**: a function whose name starts with `use` that gives a component a power such as memory (`useState`) or a side job (`useEffect`); Lucy's own hooks are in `frontend/src/hooks/`. Details in a later session.
+- **Hook**: a function whose name starts with `use` that gives a component a power such as memory (`useState`) or a side job (`useEffect`); WardWise's own hooks are in `frontend/src/hooks/`. Details in a later session.
 - **Premature optimisation**: making code faster before measuring whether it is slow. Usually costs clarity for nothing.
 - **StrictMode**: in development only, React runs each component's start-up work twice to expose hidden bugs; that is why `limits` appears twice in the Network tab. `frontend/src/main.tsx`
 
@@ -49,8 +49,8 @@ The anchor analogy for every session: the browser is the ward, Lucy's server is 
 - **422 Unprocessable Content**: the form is filled in wrong (too many slide files, notes too long).
 - **No answer at all**: the server could not be reached (down, restarting, Wi-Fi drop). There is no status code because no response came back. In `api.ts` this is `status === null`.
 - **GET vs POST** (fundamental): GET asks for something and changes nothing, so it is safe to repeat (polling sends the same GET again and again); POST sends something for the server to act on, and sending it twice can do the work twice.
-- **PUT, PATCH, DELETE**: replace, update or remove something that exists. Lucy uses none of them.
-- **Polling**: asking "is it ready yet?" on a timer; Lucy asks every 1.5 seconds, so a 6-second pack shows about 4 checks. `waitForJob` in `api.ts`
+- **PUT, PATCH, DELETE**: replace, update or remove something that exists. WardWise uses none of them.
+- **Polling**: asking "is it ready yet?" on a timer; WardWise asks every 1.5 seconds, so a 6-second pack shows about 4 checks. `waitForJob` in `api.ts`
 - **HTTP** (fundamental): the agreed format for messages between client and server. A protocol: agreed rules for a conversation, like SBAR for handovers.
 - **Request line**: the first line of a request: method, path, protocol version (`GET /api/limits HTTP/1.1`).
 - **Headers** (fundamental): labels on the outside of the envelope: what is inside, what formats are accepted, who sent it.
@@ -58,12 +58,12 @@ The anchor analogy for every session: the browser is the ward, Lucy's server is 
 - **Content-Type** (fundamental): the header saying what the body is, such as `application/json` or `multipart/form-data`.
 - **REST** (fundamental): a style of API with nouns in the paths (`/api/packs`, `/api/jobs/{id}`), verbs as methods, and JSON in the bodies. A convention, not a law.
 - **405 Method Not Allowed**: right address, wrong verb (`GET /api/packs`).
-- **413 Content Too Large**: too big. Lucy uses it when the material is over the word budget.
-- **422, two kinds**: Lucy's own rule written by hand ("nothing to write a study pack from"), or the automatic shape check before Lucy's code runs (`{"notes": 5}`, or a job ID that is not 32 hex characters).
-- **429 Too Many Requests**: slow down. A 4xx that heals with time: the request was fine, just too soon. Groq sends it to Lucy when the per-minute limit is reached.
+- **413 Content Too Large**: too big. WardWise uses it when the material is over the word budget.
+- **422, two kinds**: WardWise's own rule written by hand ("nothing to write a study pack from"), or the automatic shape check before WardWise's code runs (`{"notes": 5}`, or a job ID that is not 32 hex characters).
+- **429 Too Many Requests**: slow down. A 4xx that heals with time: the request was fine, just too soon. Groq sends it to WardWise when the per-minute limit is reached.
 - **500 / 503**: the server's code broke / the server is overloaded or down for now. Retrying later may work.
 - **4xx vs 5xx in practice** (fundamental): 4xx, change the request (except 429: wait); 5xx, retry later.
-- **Exponential backoff**: retrying after waiting longer each time (1 s, 2 s, 4 s), so a jammed service is not jammed further. The `openai` library does it for Lucy (`max_retries=2` in `providers.py`), then Lucy tells the student to try again in a minute.
+- **Exponential backoff**: retrying after waiting longer each time (1 s, 2 s, 4 s), so a jammed service is not jammed further. The `openai` library does it for WardWise (`max_retries=2` in `providers.py`), then WardWise tells the student to try again in a minute.
 - **Regular expression (regex)**: a pattern for text, such as `^[0-9a-f]{32}$` (exactly 32 characters from 0-9 and a-f). Look up when needed.
 - **Binary vs text**: a recording or PDF is raw bytes, not letters, so it cannot go into JSON as it is.
 - **Base64**: a way to write bytes as text; makes them about a third bigger.
@@ -75,27 +75,27 @@ The anchor analogy for every session: the browser is the ward, Lucy's server is 
 - **Same-origin policy** (fundamental): the browser's rule that a page may not read answers from another origin unless that origin allows it. Stops a dodgy site from reading your bank through your logged-in browser.
 - **CORS (Cross-Origin Resource Sharing)** (fundamental): how a server names the origins allowed to read its answers. Enforced by the browser, not the server: `curl` and scripts ignore it, so it is not a lock on the API. The sign "results to Ward 5173 only", obeyed by honest porters. `CORSMiddleware` in `backend/app/main.py`
 - **Preflight (OPTIONS)**: the browser phoning ahead before a non-simple request (`POST /api/packs` with `Content-Type: application/json`). Simple requests (GETs, form-style POSTs such as multipart) go straight out.
-- **Access-Control-Max-Age**: how long the browser may remember a preflight answer; Lucy says 600 seconds, so a second pack within 10 minutes shows no OPTIONS row.
-- **Proxy**: a go-between that forwards requests. A development proxy would have hidden CORS; Lucy calls the server directly so CORS is met on purpose.
+- **Access-Control-Max-Age**: how long the browser may remember a preflight answer; WardWise says 600 seconds, so a second pack within 10 minutes shows no OPTIONS row.
+- **Proxy**: a go-between that forwards requests. A development proxy would have hidden CORS; WardWise calls the server directly so CORS is met on purpose.
 
 ## 4. The server
 
 The lab's four stations: switchboard (uvicorn), specimen reception (middleware), receptionist (router), the bench (the route function).
 
 - **Web server vs web framework** (fundamental): the web server (uvicorn) sits on the port and handles raw connections; the framework (FastAPI) understands requests, routes and checks them, and builds answers. Switchboard vs receptionist.
-- **FastAPI, Flask, Django**: Python's three main web frameworks. FastAPI is API-focused with automatic validation and docs; Flask is minimal; Django is "batteries included" (database, admin, accounts). Express (Node) and Spring (Java) do the same jobs elsewhere. Why Lucy uses FastAPI: an API only, no accounts or server database, Pydantic validation for AI answers, async for the reading lookups, free docs.
+- **FastAPI, Flask, Django**: Python's three main web frameworks. FastAPI is API-focused with automatic validation and docs; Flask is minimal; Django is "batteries included" (database, admin, accounts). Express (Node) and Spring (Java) do the same jobs elsewhere. Why WardWise uses FastAPI: an API only, no accounts or server database, Pydantic validation for AI answers, async for the reading lookups, free docs.
 - **Middleware** (fundamental): code that runs on every request before any route. Specimen reception. Layered like an onion: the last added runs first. CORS and the size limit in `backend/app/main.py`
 - **Ordering bug**: a bug caused by steps in the wrong order. With the size limit outside CORS, a 413 would lose its CORS label and the student would see "could not reach its server".
 - **Routing** (fundamental): matching method + path to a function. `@router.get(...)`, `@router.post(...)` in `routes.py`
 - **Path parameter vs query parameter** (fundamental): the path names which thing (`/api/jobs/96f3…`, a bed number); the query gives options (`?term=asthma`, "fasting, urgent").
 - **The signature is the form spec**: FastAPI reads a route's parameters (`Query(...)`, `PathParam(...)`, `Form(...)`, `File()`, a Pydantic model) and fetches and checks each before the function runs.
-- **Two layers of checking**: FastAPI checks shape (a structured list in the error); Lucy's code checks meaning (a plain sentence). `/api/reading?term=a` passes the first and fails the second.
+- **Two layers of checking**: FastAPI checks shape (a structured list in the error); WardWise's code checks meaning (a plain sentence). `/api/reading?term=a` passes the first and fails the second.
 - **Pydantic** (fundamental): the reception clerk in code. Checks data against a declared shape. `backend/app/schemas.py`
 - **Model / schema** (fundamental): the declared shape of a form: boxes, types, limits. `PackRequest`, `JobState`
-- **Validation** (fundamental): checking data against a schema; failures become 422 before Lucy's code runs.
+- **Validation** (fundamental): checking data against a schema; failures become 422 before WardWise's code runs.
 - **Literal**: a tickbox, only the listed values are allowed (`Literal['pdf', 'pptx']`).
 - **Response model**: the declared shape of an answer (`-> JobState`). Works as an output filter: only declared boxes leave, so a stray key in a job is dropped (shown live with a fake key).
-- **Extra fields: ignore vs forbid**: Pydantic ignores unknown boxes by default (tolerant); `extra='forbid'` rejects them (strict). Lucy is tolerant with the browser and strict with the AI's form.
+- **Extra fields: ignore vs forbid**: Pydantic ignores unknown boxes by default (tolerant); `extra='forbid'` rejects them (strict). WardWise is tolerant with the browser and strict with the AI's form.
 - **Silent failure vs fail loudly** (fundamental): an error nobody sees (a misspelled `transcipt` silently drops the transcript) is worse than a visible one. Fail loudly: stop and say so.
 - **OpenAPI, /docs**: a standard machine-readable description of an API, generated by FastAPI from the code; `/docs` shows it as a page you can try requests from. Used to call others' APIs, test your own, hand an API to a teammate, generate client code, or describe a service to an AI.
 - **API contract, API-first design**: teams agree the API description first, then build both sides in parallel against it.
@@ -105,23 +105,23 @@ The lab's four stations: switchboard (uvicorn), specimen reception (middleware),
 - **State machine / lifecycle** (fundamental): named stages and the allowed moves between them (queued → working → done or failed; never back). Admission → ward → discharge.
 - **Asynchronous request-reply** (fundamental pattern): accept, return a reference, work in the background, let the client check. Parcel tracking, YouTube processing, a hospital lab.
 - **Polling vs push (webhook)**: the client asks repeatedly vs the server calls back when done.
-- **Job queue**: a separate store that holds jobs for many workers and survives restarts (Redis, Celery, RabbitMQ, Amazon SQS). Lucy uses a dictionary in memory instead (one process only).
+- **Job queue**: a separate store that holds jobs for many workers and survives restarts (Redis, Celery, RabbitMQ, Amazon SQS). WardWise uses a dictionary in memory instead (one process only).
 - **Scheduled (cron) job vs triggered job**: runs on a timetable vs started by a user's action.
 - **Unguessable ID** (fundamental): a random ID that works as a key; `secrets.token_hex(16)` gives about 3 × 10³⁸ possibilities, so nobody can guess another student's job. "Share by link" works the same way.
 - **Thread, race condition, lock**: parallel workers in one program; two writing at once can scramble shared data (a race condition); a lock is the single marker pen. `_lock` in `jobs.py`
 - **Transport error vs job-level error** (fundamental): the call itself failed (4xx, 5xx, no answer) vs the call worked and the answer says the work failed (200 with `"status": "failed"`). After a 202, errors can only travel inside the job state.
 - **Graceful degradation**: one broken part does not sink the rest. An unreadable slide becomes a warning and the pack is still written.
 - **Data minimisation, storage limitation** (fundamental): keep the least data for the shortest time. In data protection laws (GDPR, and similar principles in Rwanda's law) and hospital retention policies.
-- **`finally`** (fundamental): "run this whatever happened above". Lucy deletes a job's folder in a `finally`. Same idea as `with` in Python, `defer` in Go, `using` in C#.
-- **Lucy's three layers of deletion**: `finally` at the end of each reading job; a sweep of `lucy-jobs` at every start (for crashes and power cuts); a rolling sweep of folders older than 15 minutes.
+- **`finally`** (fundamental): "run this whatever happened above". WardWise deletes a job's folder in a `finally`. Same idea as `with` in Python, `defer` in Go, `using` in C#.
+- **WardWise's three layers of deletion**: `finally` at the end of each reading job; a sweep of `wardwise-jobs` at every start (for crashes and power cuts); a rolling sweep of folders older than 15 minutes.
 - **Secure deletion**: deleting a file removes the signpost before the data is overwritten. A detail to look up.
 
 ## 5. The AI layer
 
-- **Training vs inference** (fundamental): learning (weights adjusted on huge data, once, costly) vs use (input in, output out, weights unchanged). A printed textbook edition: reading it does not change it. Whisper does not improve from Lucy's recordings.
+- **Training vs inference** (fundamental): learning (weights adjusted on huge data, once, costly) vs use (input in, output out, weights unchanged). A printed textbook edition: reading it does not change it. Whisper does not improve from WardWise's recordings.
 - **Weights**: the model's internal numbers, set during training.
-- **Fine-tuning**: a short extra round of training on new data. Would need students' transcripts on a server, so not for Lucy.
-- **Prompt (for Whisper)**: a short hint of expected vocabulary. Lucy sends a generic one (`TRANSCRIBE_HINT` in `providers.py`).
+- **Fine-tuning**: a short extra round of training on new data. Would need students' transcripts on a server, so not for WardWise.
+- **Prompt (for Whisper)**: a short hint of expected vocabulary. WardWise sends a generic one (`TRANSCRIBE_HINT` in `providers.py`).
 - **Hallucination**: a model producing text that was never in the input or is not true; Whisper can add whole sentences during silences. Session 5 goes deeper.
 
 ## 6. Storage and data ownership
@@ -131,6 +131,6 @@ The lab's four stations: switchboard (uvicorn), specimen reception (middleware),
 - **Never trust the client** (fundamental): checks in the page are a courtesy (quick feedback); checks on the server are the safety, because anyone can send requests without the page. Both exist for the slide limit: `SlideDropZone.tsx` and `routes.py`.
 - **Trust boundary, validate at the boundary** (fundamental): wherever data enters from outside (requests, files, other APIs, AI answers), check it once, strictly, so the inside can trust it. Admission wristbands. Plain type hints and TypeScript types check nothing at run time; Pydantic and Zod do.
 - **Defence in depth** (fundamental): several independent layers, so one mistake is not enough (the response model filter plus never putting keys in job data; three layers of deletion).
-- **Authentication vs authorisation** (fundamental): who you are (sign-in) vs what you may see (only your own packs). Needed if Lucy ever has accounts.
+- **Authentication vs authorisation** (fundamental): who you are (sign-in) vs what you may see (only your own packs). Needed if WardWise ever has accounts.
 - **Supply chain for AI skills**: a skill's instructions steer the AI like code steers a program; read them, pin a reviewed copy, never auto-update by link.
-- **Browser extensions**: run inside every page and can send requests of their own (a Google Fonts request appeared in Lucy's Network tab that Lucy's code never makes). We control Lucy's code, not the visitor's browser.
+- **Browser extensions**: run inside every page and can send requests of their own (a Google Fonts request appeared in WardWise's Network tab that WardWise's code never makes). We control WardWise's code, not the visitor's browser.

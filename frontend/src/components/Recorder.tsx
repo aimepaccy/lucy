@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'r
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { AlertCircle, ArrowUpFromLine, FileAudio, Loader2, Mic, Pause, Play, Square } from 'lucide-react'
 import { Panel } from '@/components/Panel'
+import { Sketch, Strokes } from '@/components/Sketch'
 import { Button } from '@/components/ui/button'
 import { useAudioRecorder, type FinishedRecording } from '@/hooks/use-audio-recorder'
 import { MAX_AUDIO_MB, UPLOAD_ACCEPT, fileNameFor, isTooLarge, looksLikeAudio, readDuration } from '@/lib/audio'
@@ -125,7 +126,7 @@ export function Recorder({ recording, onChange, onLiveChange }: RecorderProps) {
 
       <div className="rounded-2xl border border-b-4 bg-secondary/70 p-3 shadow-inner">
         <div className="flex items-center justify-between px-1 pb-2 text-[0.6rem] font-semibold tracking-[0.25em] text-muted-foreground uppercase">
-          <span>Lucy · Stereo cassette</span>
+          <span>WardWise · Stereo cassette</span>
           <Lamp state={lamp} pulse={!reduceMotion} />
         </div>
         <Cassette label={tapeLabel} wound={Math.min(1, wound)} spinning={mic.status === 'recording' || playing} />
@@ -185,7 +186,9 @@ export function Recorder({ recording, onChange, onLiveChange }: RecorderProps) {
           </p>
         )}
         {view === 'live' && (
-          <p className="text-xs text-muted-foreground">Stop keeps the recording. To throw it away, stop, then eject.</p>
+          <p className="text-xs text-muted-foreground">
+            Pause for anything off the record. Stop keeps the recording; to throw it away, stop, then eject.
+          </p>
         )}
         {view === 'done' && recording && (
           <p className="text-xs text-muted-foreground tabular-nums">
@@ -294,61 +297,91 @@ function Lamp({ state, pulse }: { state: 'rec' | 'paused' | 'play' | 'off'; puls
   )
 }
 
-// The cassette in its window. Tape winds from the left reel to the right one as it runs.
+// The cassette as a pencil sketch, in the same hand as the other drawings.
+// Shown about twice the size of the others, so its lines are drawn thinner.
+const WEIGHT = 0.6
+
+const cassette = [
+  // Shell, drawn twice slightly apart, and the label.
+  'M6 6 L234 5 L235 126 L5 127 Z',
+  'M4 9 L232 7.5 M237 9 L235 122',
+  'M18 14 L222 13 L222.5 38 L18.5 39 Z',
+  // The window, and the ridge with its guide holes.
+  'M64 44 L176 44 A28 28 0 0 1 176 100 L64 100 A28 28 0 0 1 64 44 Z',
+  'M52 127 L62 108 L178 108 L188 127',
+  'M83 118 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0 M117 118 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0 M151 118 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0',
+  // Screws.
+  'M11 116 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0 M223 116 a3 3 0 1 0 6 0 a3 3 0 1 0 -6 0',
+]
+
+const cassetteInk = [
+  // The label's rule, and light on the window.
+  'M26 31 L214 30.5',
+  'M184 51 L198 65 M178 50 L198 70',
+]
+
+// Tape winds from the left reel to the right one as it runs.
 function Cassette({ label, wound, spinning }: { label: string; wound: number; spinning: boolean }) {
   const left = 12 + 15 * (1 - wound)
   const right = 12 + 15 * wound
 
   return (
-    <svg viewBox="0 0 240 132" className="w-full" aria-hidden="true">
-      <rect x="2" y="2" width="236" height="128" rx="9" className="fill-card stroke-border" strokeWidth="2" />
-      <rect x="14" y="10" width="212" height="26" rx="3" className="fill-(--paper) stroke-border" />
-      <line x1="22" y1="30" x2="218" y2="30" className="stroke-(--vermilion)" strokeOpacity="0.5" />
-      <text x="24" y="25" className="fill-foreground font-ink text-[11px]">
-        {label.length > 34 ? `${label.slice(0, 33)}…` : label}
-      </text>
-      <text x="216" y="25" textAnchor="end" className="fill-muted-foreground text-[8px] font-semibold tracking-widest">
-        C-90
-      </text>
+    <Sketch
+      viewBox="0 0 240 132"
+      size={1 / WEIGHT}
+      className="w-full"
+      overlay={
+        <>
+          <text x="26" y="26" className="fill-foreground font-ink text-[11px]">
+            {label.length > 34 ? `${label.slice(0, 33)}…` : label}
+          </text>
+          <text x="214" y="26" textAnchor="end" className="fill-muted-foreground text-[8px] font-semibold tracking-widest">
+            C-90
+          </text>
+        </>
+      }
+    >
+      <Strokes paths={cassette} tone="graphite" weight={WEIGHT} />
+      <Strokes paths={cassetteInk} tone="ink" start={cassette.length} weight={WEIGHT} />
 
-      <rect x="36" y="44" width="168" height="56" rx="26" className="fill-[oklch(0.24_0.012_60)]" />
-      <path
-        d={`M ${82 - 0.6 * left} ${72 + 0.8 * left} L 98 104 L 142 104 L ${158 + 0.6 * right} ${72 + 0.8 * right}`}
-        className="fill-none stroke-[oklch(0.42_0.06_50)]"
-        strokeWidth="2"
-      />
-      <Reel cx={82} r={left} spinning={spinning} />
-      <Reel cx={158} r={right} spinning={spinning} />
-
-      <path d="M 52 130 L 62 108 L 178 108 L 188 130" className="fill-muted stroke-border" strokeWidth="1.5" />
-      {[86, 120, 154].map((x) => (
-        <circle key={x} cx={x} cy={119} r="3" className="fill-foreground/25" />
-      ))}
-    </svg>
+      {/* The reels change size as the tape winds, so they are not drawn in stroke by stroke. */}
+      <motion.g initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6, delay: 0.9 }}>
+        <path
+          d={`M ${82 - 0.6 * left} ${72 + 0.8 * left} L 98 104 L 142 104 L ${158 + 0.6 * right} ${72 + 0.8 * right}`}
+          className="stroke-muted-foreground"
+          strokeWidth={1.2 * WEIGHT}
+        />
+        <Reel cx={82} r={left} spinning={spinning} />
+        <Reel cx={158} r={right} spinning={spinning} />
+      </motion.g>
+    </Sketch>
   )
 }
 
 function Reel({ cx, r, spinning }: { cx: number; r: number; spinning: boolean }) {
   return (
     <g>
-      <circle cx={cx} cy={72} r={r} className="fill-[oklch(0.42_0.06_50)]" />
+      {/* The wound tape, with a second ring as a quick sketch would draw it. */}
+      <circle cx={cx} cy={72} r={r} className="stroke-muted-foreground" strokeWidth={1.2 * WEIGHT} />
+      <circle cx={cx} cy={72} r={Math.max(r - 2.5, 11.5)} className="stroke-muted-foreground/50" strokeWidth={WEIGHT} />
       <g
         className="animate-spin motion-reduce:animate-none"
         style={{ transformBox: 'fill-box', transformOrigin: 'center', animationDuration: '1.8s', animationPlayState: spinning ? 'running' : 'paused' }}
       >
-        <circle cx={cx} cy={72} r="11" className="fill-card" />
+        <circle cx={cx} cy={72} r="10" className="stroke-primary" strokeWidth={WEIGHT} />
         {[0, 60, 120, 180, 240, 300].map((angle) => (
-          <rect
+          <line
             key={angle}
-            x={cx - 1.5}
-            y={62}
-            width="3"
-            height="5"
-            className="fill-foreground/70"
+            x1={cx}
+            y1={63}
+            x2={cx}
+            y2={67}
+            className="stroke-primary"
+            strokeWidth={1.4 * WEIGHT}
             transform={`rotate(${angle} ${cx} 72)`}
           />
         ))}
-        <circle cx={cx} cy={72} r="4" className="fill-foreground/70" />
+        <circle cx={cx} cy={72} r="3.5" className="stroke-muted-foreground" strokeWidth={WEIGHT} />
       </g>
     </g>
   )
@@ -356,7 +389,7 @@ function Reel({ cx, r, spinning }: { cx: number; r: number; spinning: boolean })
 
 function Counter({ seconds }: { seconds: number }) {
   return (
-    <div className="flex flex-col justify-center rounded-lg bg-[oklch(0.22_0.01_60)] px-3 py-1.5 text-[oklch(0.93_0.014_85)] shadow-inner">
+    <div className="flex flex-col justify-center rounded-lg border bg-(--paper) px-3 py-1.5 text-foreground shadow-inner">
       <span className="text-[0.55rem] font-semibold tracking-[0.2em] uppercase opacity-60">Counter</span>
       <span className="font-mono text-2xl leading-tight tracking-wider tabular-nums">{formatDuration(seconds)}</span>
     </div>

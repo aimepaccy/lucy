@@ -14,7 +14,7 @@ type LibraryProps = {
   onOpenPack: (record: SavedPack) => void
   // The shown pack closes when it is deleted.
   onDeleted: (id: string) => void
-  // Everything Lucy saved in this browser is gone: packs and the notes draft.
+  // Everything WardWise saved in this browser is gone: packs and the notes draft.
   onDeletedAll: () => void
 }
 
@@ -184,7 +184,7 @@ export function Library({ version, onOpenPack, onDeleted, onDeletedAll }: Librar
             <div className="min-w-0 flex-1">
               <Dialog.Title className="text-base font-semibold">My study packs</Dialog.Title>
               <Dialog.Description className="text-sm text-muted-foreground">
-                Saved in this browser only, not on Lucy's server.
+                Saved in this browser only, not on WardWise's server.
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
@@ -238,7 +238,7 @@ export function Library({ version, onOpenPack, onDeleted, onDeletedAll }: Librar
               <p className="text-sm text-muted-foreground">Loading your packs...</p>
             ) : packs.length === 0 ? (
               <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                No saved packs yet. Every study pack Lucy writes is saved here automatically.
+                No saved packs yet. Every study pack WardWise writes is saved here automatically.
               </p>
             ) : (
               <ul className="flex flex-col gap-2" aria-label="Saved study packs">

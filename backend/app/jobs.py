@@ -18,9 +18,9 @@ from app.schemas import AudioKind, JobState, Materials, PackRequest, SlideKind, 
 
 RESULT_TTL_SECONDS = 15 * 60
 # Every job's uploads live under this one folder, so leftovers can be found and removed.
-JOBS_ROOT = Path(tempfile.gettempdir()) / 'lucy-jobs'
+JOBS_ROOT = Path(tempfile.gettempdir()) / 'wardwise-jobs'
 
-log = logging.getLogger('lucy.jobs')
+log = logging.getLogger('wardwise.jobs')
 
 
 @dataclass
@@ -31,11 +31,18 @@ class SlideInput:
 
 
 @dataclass
+class PhotoInput:
+    path: Path
+    name: str
+
+
+@dataclass
 class JobInput:
     folder: Path
     slides: list[SlideInput]
     audio: Path | None = None
     audio_kind: AudioKind | None = None
+    photos: list[PhotoInput] = field(default_factory=list)
 
 
 @dataclass
@@ -109,11 +116,35 @@ def _read_slides(slides: list[SlideInput], warnings: list[str]) -> list[SlideTex
             warnings.append(f'{slide.name} could not be read.')
             continue
         if not text:
-            warnings.append(f'{slide.name} has no text Lucy can read. It may contain pictures of slides.')
+            warnings.append(f'{slide.name} has no text WardWise can read. It may contain pictures of slides.')
         if pages > extract.MAX_PAGES:
-            warnings.append(f'{slide.name} is long, so Lucy read only the first {extract.MAX_PAGES} pages.')
+            warnings.append(f'{slide.name} is long, so WardWise read only the first {extract.MAX_PAGES} pages.')
         results.append(SlideText(name=slide.name, kind=slide.kind, pages=pages, text=text))
     return results
+
+
+def _read_photos(photos: list[PhotoInput], warnings: list[str]) -> str | None:
+    pages = []
+    for photo in photos:
+        try:
+            jpeg = extract.photo_for_reading(photo.path)
+        except extract.UnreadableFile:
+            warnings.append(f'{photo.name} could not be read as a photo.')
+            continue
+        # A busy or unreachable service still fails the job; a turned-down photo only warns.
+        try:
+            text = providers.read_handwriting(jpeg)
+        except providers.PhotoCutShort:
+            warnings.append(f'{photo.name} has too much writing to read at once. Try half a page per photo.')
+            continue
+        except providers.UnreadablePhoto:
+            warnings.append(f'WardWise could not read {photo.name}. Try a clearer photo.')
+            continue
+        if text:
+            pages.append(text)
+        else:
+            warnings.append(f'WardWise found no handwriting in {photo.name}.')
+    return '\n\n'.join(pages) if pages else None
 
 
 def run(job_id: str, work: JobInput) -> None:
@@ -125,6 +156,11 @@ def run(job_id: str, work: JobInput) -> None:
             _update(job_id, status='working', step='Reading the slides')
             slides = _read_slides(work.slides, warnings)
 
+        notes = None
+        if work.photos:
+            _update(job_id, status='working', step='Reading your handwritten notes')
+            notes = _read_photos(work.photos, warnings)
+
         transcript = None
         if work.audio is not None and work.audio_kind is not None:
             _update(job_id, status='working', step='Transcribing the recording')
@@ -132,7 +168,7 @@ def run(job_id: str, work: JobInput) -> None:
             if not transcript:
                 warnings.append('No speech was heard in the recording.')
 
-        materials = Materials(transcript=transcript, slides=slides, warnings=warnings)
+        materials = Materials(transcript=transcript, notes=notes, slides=slides, warnings=warnings)
         _update(job_id, status='done', step='Done', materials=materials)
     except Exception as error:
         _fail(job_id, error, 'Something went wrong while reading your material.')

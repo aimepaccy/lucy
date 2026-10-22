@@ -32,7 +32,7 @@ export function Flashcards({ cards }: { cards: Flashcard[] }) {
   }
 
   const question = `Question: ${sentence(card.front)}`
-  const answer = `Answer: ${sentence(card.back)} ${card.grounded ? `From your session: "${card.quote}"` : 'Lucy could not find this in your material.'}`
+  const answer = `Answer: ${sentence(card.back)} ${card.grounded ? `From your session: "${card.quote}"` : 'WardWise could not find this in your material.'}`
 
   return (
     <div className="flex flex-col gap-4" onKeyDown={onKeyDown}>

@@ -4,7 +4,7 @@ import type { Reading } from '@/types'
 
 export type Lookup = { status: 'loading' } | { status: 'done'; reading: Reading } | { status: 'error'; message: string }
 
-// Further reading for one study pack: which term is chosen, and what Lucy found for each term asked about.
+// Further reading for one study pack: which term is chosen, and what WardWise found for each term asked about.
 export function useReading() {
   const [chosen, setChosen] = useState<string | null>(null)
   // One answer per term, so going back to a term shows it at once, and a late answer lands in the right place.

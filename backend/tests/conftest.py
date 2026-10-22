@@ -17,7 +17,7 @@ def private_jobs_folder(monkeypatch, tmp_path):
     """Each test gets its own folder for uploads, so tests never touch the real one."""
     from app import jobs
 
-    monkeypatch.setattr(jobs, 'JOBS_ROOT', tmp_path / 'lucy-jobs')
+    monkeypatch.setattr(jobs, 'JOBS_ROOT', tmp_path / 'wardwise-jobs')
 
 
 @pytest.fixture(autouse=True)
@@ -32,6 +32,24 @@ def fake_transcribe(monkeypatch):
         return FAKE_TRANSCRIPT
 
     monkeypatch.setattr(providers, 'transcribe', transcribe)
+    return calls
+
+
+FAKE_HANDWRITING = 'Silent chest = life threatening'
+
+
+@pytest.fixture(autouse=True)
+def fake_read_handwriting(monkeypatch):
+    """Stands in for the vision model: records each photo it is sent and returns fixed text."""
+    from app import providers
+
+    calls = []
+
+    def read_handwriting(jpeg):
+        calls.append(jpeg)
+        return FAKE_HANDWRITING
+
+    monkeypatch.setattr(providers, 'read_handwriting', read_handwriting)
     return calls
 
 

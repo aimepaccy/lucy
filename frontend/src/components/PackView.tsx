@@ -58,7 +58,7 @@ export function PackView({ record, save }: PackViewProps) {
         title={pack.title}
         description={
           record.origin === 'imported'
-            ? 'Imported from a file. Lucy checked its quotes against the material in the file, but cannot confirm where that material came from.'
+            ? 'Imported from a file. WardWise checked its quotes against the material in the file, but cannot confirm where that material came from.'
             : 'Your study pack, written by AI from your session. Check it against trusted sources.'
         }
         aside={

@@ -31,7 +31,7 @@ async def lifespan(app: FastAPI):
     await web.close()
 
 
-app = FastAPI(title='Lucy API', version='0.1.0', lifespan=lifespan)
+app = FastAPI(title='WardWise API', version='0.1.0', lifespan=lifespan)
 app.include_router(router)
 
 # The middleware added last runs first. CORS goes outermost so that even a 413 from

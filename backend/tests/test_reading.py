@@ -139,11 +139,11 @@ def test_one_source_failing_leaves_the_others_and_is_not_cached(services):
     services.down.add('en.wikipedia.org')
     sources = by_key(client.get('/api/reading', params={'term': 'asthma'}).json())
     assert sources['wikipedia']['status'] == 'failed'
-    assert sources['wikipedia']['note'] == 'Lucy could not reach Wikipedia just now.'
+    assert sources['wikipedia']['note'] == 'WardWise could not reach Wikipedia just now.'
     assert sources['wikipedia']['links'] == []
     assert sources['pubmed']['status'] == 'ok'
 
-    # Asked again once Wikipedia is back, Lucy asks again rather than repeating the failure.
+    # Asked again once Wikipedia is back, WardWise asks again rather than repeating the failure.
     services.down.clear()
     sources = by_key(client.get('/api/reading', params={'term': 'asthma'}).json())
     assert sources['wikipedia']['status'] == 'ok'

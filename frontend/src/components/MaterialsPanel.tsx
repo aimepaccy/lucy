@@ -1,6 +1,6 @@
 import { useId, useRef, useState } from 'react'
 import { motion } from 'motion/react'
-import { AlertTriangle, ChevronRight, FileText, Mic, Presentation, ScanText, Undo2, X } from 'lucide-react'
+import { AlertTriangle, ChevronRight, FileText, Mic, NotebookPen, Presentation, ScanText, Undo2, X } from 'lucide-react'
 import { Panel } from '@/components/Panel'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -9,10 +9,10 @@ import { hasCorrections, hasReviewable } from '@/lib/materials'
 import type { Materials } from '@/types'
 
 type MaterialsPanelProps = {
-  // What Lucy heard and read, unchanged, and the student's corrected copy of it.
+  // What WardWise heard and read, unchanged, and the student's corrected copy of it.
   heard: Materials
   draft: Materials
-  // While Lucy writes, the text is read-only: the pack is written from the text as it was when sent.
+  // While WardWise writes, the text is read-only: the pack is written from the text as it was when sent.
   locked: boolean
   onChange: (draft: Materials) => void
   onClose: () => void
@@ -22,7 +22,7 @@ export function MaterialsPanel({ heard, draft, locked, onChange, onClose }: Mate
   const [confirmingClose, setConfirmingClose] = useState(false)
   const closeRef = useRef<HTMLButtonElement>(null)
   const confirmTextId = useId()
-  const { transcript, slides, warnings } = draft
+  const { transcript, notes, slides, warnings } = draft
 
   function requestClose() {
     if (hasCorrections(heard, draft)) setConfirmingClose(true)
@@ -42,14 +42,14 @@ export function MaterialsPanel({ heard, draft, locked, onChange, onClose }: Mate
     <motion.div initial="hidden" animate="show">
       <Panel
         icon={ScanText}
-        title="What Lucy heard and read"
+        title="What WardWise heard and read"
         description={
           hasReviewable(heard)
-            ? 'Correct anything Lucy got wrong. Your study pack is written from your corrected version. Transcripts are made by AI and can contain mistakes.'
-            : 'Lucy could not read your slides, so your study pack will be written from your notes.'
+            ? 'Correct anything WardWise got wrong. Your study pack is written from your corrected version. Transcripts and notes are read by AI and can contain mistakes.'
+            : 'WardWise could not read your files. Try adding them again, or other ones.'
         }
         aside={
-          <Button ref={closeRef} variant="ghost" size="icon" onClick={requestClose} aria-label="Close what Lucy heard and read">
+          <Button ref={closeRef} variant="ghost" size="icon" onClick={requestClose} aria-label="Close what WardWise heard and read">
             <X />
           </Button>
         }
@@ -102,6 +102,27 @@ export function MaterialsPanel({ heard, draft, locked, onChange, onClose }: Mate
                 placeholder="No speech was heard."
                 locked={locked}
                 onChange={(text) => onChange({ ...draft, transcript: text })}
+              />
+            </section>
+          )}
+
+          {notes !== null && (
+            <section>
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-medium">
+                <NotebookPen className="size-4 text-muted-foreground" aria-hidden="true" />
+                Handwritten notes
+                <span className="font-normal text-muted-foreground">
+                  · {plural(countWords(notes), 'word')} · read by AI
+                  {notes !== heard.notes && ', corrected by you'}
+                </span>
+              </h3>
+              <EditableText
+                value={notes}
+                original={heard.notes ?? ''}
+                label="Handwritten notes"
+                placeholder="No handwriting was found."
+                locked={locked}
+                onChange={(text) => onChange({ ...draft, notes: text })}
               />
             </section>
           )}

@@ -11,14 +11,14 @@ import type { Limits, PackSize, Recording, SendState, SessionReceipt, WriteState
 
 type GenerateBarProps = {
   generateRef: Ref<HTMLButtonElement>
-  notesWords: number
+  photoCount: number
   recording: Recording | null
   recordingLive: boolean
   slideCount: number
   sendState: SendState
-  // True when the recording or slides changed after Lucy read them.
+  // True when the recording or slides changed after WardWise read them.
   inputsChanged: boolean
-  // True when the student has corrected what Lucy heard and read.
+  // True when the student has corrected what WardWise heard and read.
   corrected: boolean
   writeState: WriteState
   // The text a study pack would be written from, and the server's limits (null until known).
@@ -29,21 +29,22 @@ type GenerateBarProps = {
   onDismiss: () => void
 }
 
-function describeReceipt({ notes_words, slides, audio }: SessionReceipt) {
+function describeReceipt({ notes_words, slides, audio, photos }: SessionReceipt) {
   const parts = []
   if (notes_words > 0) parts.push(`${plural(notes_words, 'word')} of notes`)
   if (audio) parts.push(`a recording (${formatFileSize(audio.size_bytes)})`)
+  if (photos.length > 0) parts.push(`${plural(photos.length, 'photo')} of notes`)
   if (slides.length > 0) {
     const bytes = slides.reduce((total, slide) => total + slide.size_bytes, 0)
     parts.push(`${plural(slides.length, 'slide file')} (${formatFileSize(bytes)})`)
   }
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]
-  return `Lucy received ${list}.`
+  return `WardWise received ${list}.`
 }
 
 export function GenerateBar({
   generateRef,
-  notesWords,
+  photoCount,
   recording,
   recordingLive,
   slideCount,
@@ -65,13 +66,13 @@ export function GenerateBar({
   const busy = sendState.status === 'sending' || sendState.status === 'working' || writing
 
   const chips = [
-    notesWords > 0 && { key: 'notes', icon: NotebookPen, label: `${plural(notesWords, 'word')} of notes` },
     recording && {
       key: 'audio',
       icon: Mic,
       label: recording.durationSec !== null ? `${formatDuration(recording.durationSec)} recording` : 'Audio file',
     },
     recordingLive && { key: 'live', icon: Mic, label: 'Recording in progress: stop it to send' },
+    photoCount > 0 && { key: 'photos', icon: NotebookPen, label: `${plural(photoCount, 'photo')} of notes` },
     slideCount > 0 && { key: 'slides', icon: Presentation, label: plural(slideCount, 'slide file') },
   ].filter((chip) => chip !== false && chip !== null)
 
@@ -80,10 +81,12 @@ export function GenerateBar({
     reviewing && !inputsChanged && limits !== null && packSize !== null && packSize.chars > limits.max_pack_chars
 
   // While the student reviews, the button writes the study pack, or reads again if the inputs changed.
-  const enabled = chips.length > 0 && !busy && !recordingLive && !tooLong
+  // Every photo or file failing leaves nothing to write from, so only reading again can help.
+  const nothingRead = reviewing && !inputsChanged && !hasReviewable(sendState.materials)
+  const enabled = chips.length > 0 && !busy && !recordingLive && !tooLong && !nothingRead
 
-  // Check is skipped when there is nothing to check (notes only).
-  const willCheck = reviewing ? needsCheck(sendState.materials) : recording !== null || slideCount > 0
+  // Check is skipped when there is nothing to check.
+  const willCheck = reviewing ? needsCheck(sendState.materials) : recording !== null || slideCount > 0 || photoCount > 0
   const steps: StepKey[] = willCheck ? ['upload', 'read', 'check', 'write'] : ['upload', 'read', 'write']
 
   function stepNow(): StepKey | 'done' | null {
@@ -116,7 +119,7 @@ export function GenerateBar({
 
   const progress =
     sendState.status === 'sending'
-      ? 'Uploading to Lucy'
+      ? 'Uploading to WardWise'
       : sendState.status === 'working'
         ? sendState.step
         : writeState.status === 'writing'
@@ -130,16 +133,16 @@ export function GenerateBar({
     if (writeState.status === 'error' && !inputsChanged) return writeState.message
     if (writeState.status === 'writing') return 'Writing usually takes under a minute.'
     if (tooLong && limits) {
-      return `This is more than Lucy can write from at once (about ${limits.max_pack_words.toLocaleString()} words). Shorten your notes, the transcript or the slide text.`
+      return `This is more than WardWise can write from at once (about ${limits.max_pack_words.toLocaleString()} words). Shorten your notes, the transcript or the slide text.`
     }
     if (askingToReplace) return 'Reading again replaces your corrections. Press "Yes, read again" to continue, or keep editing above.'
     if (inputsChanged) {
       const loss = corrected ? '; this replaces your corrections' : ''
-      return `Your recording or slides changed after Lucy read them. Read again to include the changes${loss}.`
+      return `Your recording, photos or slides changed after WardWise read them. Read again to include the changes${loss}.`
     }
     if (writeState.status === 'done') return 'Your study pack is ready below. Correct the text above and write again if you need to.'
-    if (!hasReviewable(sendState.materials)) return 'Lucy has your notes and can write your study pack from them.'
-    return 'Lucy has read your material. Correct anything it got wrong above, then write your study pack.'
+    if (nothingRead) return 'WardWise could not read anything from this material. See the notes above, then try clearer photos or another file.'
+    return 'WardWise has read your material. Correct anything it got wrong above, then write your study pack.'
   }
 
   const message = describeState()
@@ -173,7 +176,7 @@ export function GenerateBar({
                   exit={{ opacity: 0 }}
                   className="text-sm text-muted-foreground"
                 >
-                  Add notes, a recording or slides to begin.
+                  Record a round, or add photos of your notes or slides, to begin.
                 </motion.p>
               ) : (
                 chips.map(({ key, icon: Icon, label }) => (

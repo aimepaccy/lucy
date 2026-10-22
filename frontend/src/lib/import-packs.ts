@@ -61,7 +61,8 @@ const savedPack = z.object({
 // The outside is checked first; each pack is then checked on its own, so one damaged pack does not
 // keep the rest of a backup out.
 const exportFile = z.object({
-  app: z.literal('lucy'),
+  // Backups made before the rename say 'lucy'.
+  app: z.enum(['wardwise', 'lucy']),
   format: z.literal(1),
   exportedAt: z.iso.datetime(),
   packs: z.array(z.unknown()).max(MAX_IMPORT_PACKS),
@@ -78,7 +79,7 @@ function cleanTerms(terms: string[]) {
 }
 
 // --- Grounding, checked again ---
-// A file can claim any item was found in its material. Lucy repeats the server's check (generate.py,
+// A file can claim any item was found in its material. WardWise repeats the server's check (generate.py,
 // _words and _locate) against the material in the file, and only ever turns "found" into "not found".
 
 const SYMBOLS = '<>≤≥%±+'
@@ -135,16 +136,16 @@ export type ImportResult = { added: number; alreadyHere: number; unreadable: num
 
 export async function importPacks(file: File): Promise<ImportResult> {
   if (file.size > MAX_IMPORT_MB * 1024 * 1024) {
-    throw new StorageError(`This file is larger than ${MAX_IMPORT_MB} MB, too large to be a Lucy export.`)
+    throw new StorageError(`This file is larger than ${MAX_IMPORT_MB} MB, too large to be a WardWise export.`)
   }
   let data: unknown
   try {
     data = JSON.parse(await file.text())
   } catch {
-    throw new StorageError('This file is not a Lucy export. Nothing was imported.')
+    throw new StorageError('This file is not a WardWise export. Nothing was imported.')
   }
   const parsed = exportFile.safeParse(data)
-  if (!parsed.success) throw new StorageError('This file is not a Lucy export. Nothing was imported.')
+  if (!parsed.success) throw new StorageError('This file is not a WardWise export. Nothing was imported.')
 
   const records: SavedPack[] = []
   let unreadable = 0

@@ -7,7 +7,7 @@ export function downloadFile(blob: Blob, name: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 1000)
 }
 
-// "Acute asthma: severity" on 13 October becomes lucy-acute-asthma-severity-2026-10-13.json.
+// "Acute asthma: severity" on 13 October becomes wardwise-acute-asthma-severity-2026-10-13.json.
 export function exportName(title: string | null) {
   // The local date: toISOString would give yesterday's date just after midnight in Rwanda.
   const now = new Date()
@@ -17,5 +17,5 @@ export function exportName(title: string | null) {
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
     .slice(0, 60)
-  return `lucy-${slug || 'pack'}-${day}.json`
+  return `wardwise-${slug || 'pack'}-${day}.json`
 }

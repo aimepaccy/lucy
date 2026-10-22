@@ -32,12 +32,12 @@ function recordAt(savedAt: string, title = pack.title): SavedPack {
   return { ...newRecord({ ...pack, title }, material), savedAt }
 }
 
-function fileFrom(value: unknown, name = 'lucy.json') {
+function fileFrom(value: unknown, name = 'wardwise.json') {
   return new File([JSON.stringify(value)], name, { type: 'application/json' })
 }
 
 async function exportedFile(records: SavedPack[]) {
-  return new File([await exportBlob(records).text()], 'lucy.json', { type: 'application/json' })
+  return new File([await exportBlob(records).text()], 'wardwise.json', { type: 'application/json' })
 }
 
 beforeEach(async () => {
@@ -89,8 +89,14 @@ describe('export and import', () => {
 
   it('drops fields it does not know', async () => {
     const record = { ...recordAt('2026-10-13T09:00:00.000Z'), extra: '<script>alert(1)</script>' }
-    await importPacks(fileFrom({ app: 'lucy', format: 1, exportedAt: record.savedAt, packs: [record] }))
+    await importPacks(fileFrom({ app: 'wardwise', format: 1, exportedAt: record.savedAt, packs: [record] }))
     expect(Object.keys((await listPacks())[0])).not.toContain('extra')
+  })
+
+  it('still imports a backup made before the rename', async () => {
+    const record = recordAt('2026-10-13T09:00:00.000Z')
+    const file = fileFrom({ app: 'lucy', format: 1, exportedAt: record.savedAt, packs: [record] })
+    expect(await importPacks(file)).toEqual({ added: 1, alreadyHere: 0, unreadable: 0 })
   })
 
   it('keeps the quotes of a genuine pack marked as found', async () => {
@@ -102,7 +108,7 @@ describe('export and import', () => {
   it.each([
     ['not JSON', new File(['not json at all'], 'notes.txt')],
     ['JSON from another app', fileFrom({ hello: 'world' })],
-    ['a newer format', fileFrom({ app: 'lucy', format: 2, exportedAt: '2026-10-13T09:00:00.000Z', packs: [] })],
+    ['a newer format', fileFrom({ app: 'wardwise', format: 2, exportedAt: '2026-10-13T09:00:00.000Z', packs: [] })],
   ])('refuses %s', async (_label, file) => {
     await expect(importPacks(file)).rejects.toBeInstanceOf(StorageError)
   })
@@ -126,7 +132,7 @@ describe('export and import', () => {
     expect((await listPacks()).map((record) => record.id)).toEqual([good.id])
   })
 
-  it('restores a pack far larger than Lucy writes', async () => {
+  it('restores a pack far larger than WardWise writes', async () => {
     const record = recordAt('2026-10-13T09:00:00.000Z')
     const long = 'word '.repeat(3_000)
     record.pack = { ...pack, overview: [long, long, long, long], summary: Array(30).fill(pack.summary[0]) }

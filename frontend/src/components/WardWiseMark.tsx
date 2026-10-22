@@ -1,15 +1,17 @@
 import { useId } from 'react'
 import { motion } from 'motion/react'
 
+// Five sound bars standing on one line; their tops trace a W (tall, short, middle, short, tall).
 const bars = [
-  { x: 7, h: 6 },
-  { x: 11.5, h: 12 },
-  { x: 16, h: 17 },
-  { x: 20.5, h: 11 },
-  { x: 25, h: 6 },
+  { x: 7, h: 18 },
+  { x: 11.5, h: 8 },
+  { x: 16, h: 13 },
+  { x: 20.5, h: 8 },
+  { x: 25, h: 18 },
 ]
+const baseline = 25
 
-export function LucyMark({ className }: { className?: string }) {
+export function WardWiseMark({ className }: { className?: string }) {
   const gradientId = useId()
 
   return (
@@ -25,12 +27,12 @@ export function LucyMark({ className }: { className?: string }) {
         <motion.rect
           key={bar.x}
           x={bar.x - 1.25}
-          y={16 - bar.h / 2}
+          y={baseline - bar.h}
           width="2.5"
           height={bar.h}
           rx="1.25"
           fill="white"
-          style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+          style={{ transformBox: 'fill-box', transformOrigin: 'bottom' }}
           initial={{ scaleY: 0.2, opacity: 0 }}
           animate={{ scaleY: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 260, damping: 14, delay: 0.25 + i * 0.07 }}

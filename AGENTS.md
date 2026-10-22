@@ -1,23 +1,23 @@
-# Lucy (study packs from ward-round teaching)
+# WardWise (study packs from ward-round teaching)
 
 **Read first:** `../_hub/PROFILE.md` and `../_hub/CONVENTIONS.md`. Then `PROGRESS.md` in this folder. The rules below add to those files. The full plan is in `docs/plan.md`.
 
 ## Goal
-Lucy is a web app MVP. A student records a (role-played) ward-round conversation, types notes and adds slides (.pptx or PDF). Lucy turns them into a study pack: a summary, flashcards, an exam-style quiz, a chat grounded in the session, and further reading from credible sources.
+WardWise is a web app MVP. A student records a (role-played) ward-round conversation, takes photos of handwritten notes and adds slides (.pptx or PDF). WardWise turns them into a study pack: a summary, flashcards, an exam-style quiz, a chat grounded in the session, and further reading from credible sources.
 
 Two equal aims:
 1. A working, good-looking MVP that Rugimbana can show one-on-one to people who can offer opportunities (a demo and conversation, not a formal pitch).
 2. Rugimbana can explain the whole system to a software developer, convincingly: every layer, every term, and why it was built that way.
 
-## Learning pause (from 2026-10-13)
-Building is paused after phase 7. The project had moved faster than understanding (aim 2), and long build sessions were tiring. Lucy sessions are now learning sessions that follow one click (Generate) through every layer, using Lucy's own code as the textbook. Plan and order in `PROGRESS.md` (Next). Each session:
+## Build and learn together (from 2026-10-22)
+Building resumed on 2026-10-22, after a pause from 2026-10-13 when the project had moved faster than understanding (aim 2). The aim now is a finished MVP that can be deployed and opened on any device at short notice. Each new feature follows the learning mode below, so understanding keeps pace. Alongside the building, learning sessions continue that follow one click (Generate) through every layer, using WardWise's own code as the textbook. Plan and order in `PROGRESS.md` (Next). Each session:
 - About 45 to 60 minutes; stop when Rugimbana is tired.
-- Beginner style: everyday analogy, then the term, then the real file in Lucy.
-- Beyond Lucy: each fundamental also gets a short general view (what it is across the industry, where else it shows up, common misunderstandings), so the knowledge is not tied to Lucy (asked for on 2026-10-18).
+- Beginner style: everyday analogy, then the term, then the real file in WardWise.
+- Beyond WardWise: each fundamental also gets a short general view (what it is across the industry, where else it shows up, common misunderstandings), so the knowledge is not tied to WardWise (asked for on 2026-10-18).
 - **Predict, don't retype:** show a few lines, ask what a change would do, then run it and see.
 - Say which concepts are fundamentals to master and which are details to look up.
 - Close with two or three explain-back questions, a `LEARNING.md` entry, and new terms added to `docs/glossary.md`.
-- No new features. Building resumes (phase 8) only when Rugimbana decides, after the final mock engineer conversation.
+- Build order and the learning plan are in `PROGRESS.md` (Next).
 
 ## Learning mode (while building)
 **Walkthrough, with occasional retyping** (agreed 2026-10-10). Every phase follows the same steps, and no phase is skipped:

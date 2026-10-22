@@ -6,3 +6,4 @@ openai
 pypdf
 python-pptx
 httpx2
+pillow

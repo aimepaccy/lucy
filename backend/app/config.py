@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # Comma-separated list of front-end addresses allowed to call this API.
     allowed_origins: str = 'http://localhost:5173'
-    max_request_mb: int = 160
+    max_request_mb: int = 240
 
     # Any OpenAI-compatible provider. SecretStr keeps the key out of logs and error messages.
     llm_base_url: str = 'https://api.groq.com/openai/v1'
@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     transcribe_base_url: str = ''
     transcribe_api_key: SecretStr = SecretStr('')
     transcribe_model: str = 'whisper-large-v3-turbo'
+
+    # A model that can read images, for photos of handwritten notes. Same provider as the LLM.
+    vision_model: str = 'qwen/qwen3.8-27b'
 
     # Further reading. Without a YouTube key the videos are left out; without an NCBI key
     # PubMed and StatPearls still work, at 3 requests a second instead of 10.

@@ -1,4 +1,4 @@
-# Lucy front end
+# WardWise front end
 
 React (Vite, TypeScript), Tailwind CSS, shadcn/ui and Motion.
 
