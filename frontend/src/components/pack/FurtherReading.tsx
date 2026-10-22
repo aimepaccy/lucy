@@ -35,7 +35,7 @@ export function FurtherReading({ terms, chosen, lookup, onChoose }: Props) {
   return (
     <div className="flex flex-col gap-5">
       <p className="text-sm text-muted-foreground">
-        Lucy's AI suggested these search terms. The links come from each service's own search, never from the AI.
+        WardWise's AI suggested these search terms. The links come from each service's own search, never from the AI.
       </p>
 
       <div role="group" aria-label="Search terms" className="flex flex-wrap gap-2">

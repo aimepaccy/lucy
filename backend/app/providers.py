@@ -1,4 +1,4 @@
-"""The one place Lucy talks to an AI provider. Which provider is chosen in .env, not here."""
+"""The one place WardWise talks to an AI provider. Which provider is chosen in .env, not here."""
 
 import base64
 import re
@@ -44,7 +44,7 @@ class PhotoCutShort(UnreadablePhoto):
 
 def _client(base_url: str, key: str, service: str) -> openai.OpenAI:
     if not key:
-        raise ProviderError(f"Lucy's server has no AI key configured, so it cannot {service} yet.")
+        raise ProviderError(f"WardWise's server has no AI key configured, so it cannot {service} yet.")
     # Worst case, three tries of two minutes each stays inside the browser's ten-minute wait.
     return openai.OpenAI(base_url=base_url, api_key=key, timeout=120, max_retries=2)
 
@@ -52,11 +52,11 @@ def _client(base_url: str, key: str, service: str) -> openai.OpenAI:
 def _translate(error: openai.APIError, service: str) -> ProviderError:
     """Turn a technical failure into words for the student. The cause stays attached for the log."""
     if isinstance(error, openai.AuthenticationError):
-        return ProviderError(f"The {service} service did not accept Lucy's key.")
+        return ProviderError(f"The {service} service did not accept WardWise's key.")
     if isinstance(error, openai.RateLimitError):
         return ProviderError(f'The {service} service is busy. Please try again in a minute.')
     if isinstance(error, (openai.APIConnectionError, openai.APITimeoutError)):
-        return ProviderError(f'Lucy could not reach the {service} service. Please try again.')
+        return ProviderError(f'WardWise could not reach the {service} service. Please try again.')
     if isinstance(error, openai.APIStatusError) and error.status_code == 413:
         return ProviderError(f'Your material is too long for the {service} service in one go.')
     return ProviderError(f'The {service} service had a problem. Please try again.')
@@ -140,10 +140,10 @@ def write_json(instructions: str, material: str, form: type[BaseModel], max_toke
     except openai.BadRequestError as error:
         # Groq answers 400 with this code when the model's output breaks the form: worth another try.
         if error.code == 'json_validate_failed':
-            raise InvalidOutput('The AI wrote something Lucy could not use.') from error
+            raise InvalidOutput('The AI wrote something WardWise could not use.') from error
         # Any other 400 is about the request itself, often a model or setting this provider does not support.
         raise ProviderError(
-            "The writing service turned down Lucy's request. The AI model settings may not suit this provider."
+            "The writing service turned down WardWise's request. The AI model settings may not suit this provider."
         ) from error
     except openai.APIError as error:
         raise _translate(error, 'writing') from error

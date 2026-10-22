@@ -126,7 +126,7 @@ export function Recorder({ recording, onChange, onLiveChange }: RecorderProps) {
 
       <div className="rounded-2xl border border-b-4 bg-secondary/70 p-3 shadow-inner">
         <div className="flex items-center justify-between px-1 pb-2 text-[0.6rem] font-semibold tracking-[0.25em] text-muted-foreground uppercase">
-          <span>Lucy · Stereo cassette</span>
+          <span>WardWise · Stereo cassette</span>
           <Lamp state={lamp} pulse={!reduceMotion} />
         </div>
         <Cassette label={tapeLabel} wound={Math.min(1, wound)} spinning={mic.status === 'recording' || playing} />

@@ -34,7 +34,7 @@ def _queue() -> web.Spacing:
 
 
 async def _get(tool: str, params: dict) -> dict:
-    params = params | {'retmode': 'json', 'tool': 'lucy'}
+    params = params | {'retmode': 'json', 'tool': 'wardwise'}
     key = get_settings().ncbi_api_key.get_secret_value()
     if key:
         params['api_key'] = key

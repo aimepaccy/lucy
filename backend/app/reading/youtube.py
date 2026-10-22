@@ -1,7 +1,7 @@
 """Videos from a short list of trusted teaching channels.
 
 YouTube's own search costs 100 quota units a call and covers one channel at a time, so five channels
-would cost 500 units a term (20 terms a day on the free 10,000). Instead Lucy keeps a catalogue: once
+would cost 500 units a term (20 terms a day on the free 10,000). Instead WardWise keeps a catalogue: once
 a day it reads each channel's list of uploads (1 unit per 50 videos, about 80 units in all) and
 searches the titles itself, which costs nothing.
 """
@@ -21,7 +21,7 @@ from app.config import get_settings
 from app.reading import web
 from app.schemas import ReadingLink
 
-log = logging.getLogger('lucy.youtube')
+log = logging.getLogger('wardwise.youtube')
 
 API = 'https://www.googleapis.com/youtube/v3/playlistItems'
 # Channel ids (found once with the API) and the names shown to students.

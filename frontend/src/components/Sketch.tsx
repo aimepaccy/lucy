@@ -2,7 +2,7 @@ import { useId, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { cn } from '@/lib/utils'
 
-// Every pencil drawing in Lucy shares one hand: the same wobble, line weights and drawing-in order.
+// Every pencil drawing in WardWise shares one hand: the same wobble, line weights and drawing-in order.
 // Graphite draws the object; ink marks the few strokes that matter.
 
 type SketchProps = {

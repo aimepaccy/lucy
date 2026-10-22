@@ -12,8 +12,8 @@ export function Summary({ pack }: { pack: StudyPack }) {
           <h3 className="text-sm font-semibold">Overview</h3>
           {/* Prose has no quotes, so it cannot be checked word for word; the label says so. */}
           <p className="text-xs text-muted-foreground">
-            Written by AI from your session. Lucy cannot check it against your material; the teaching points below
-            are checked, and any Lucy cannot find in your material are marked.
+            Written by AI from your session. WardWise cannot check it against your material; the teaching points below
+            are checked, and any WardWise cannot find in your material are marked.
           </p>
           <div className="flex flex-col gap-3 text-sm leading-relaxed">
             {pack.overview.map((paragraph, index) => (
@@ -62,7 +62,7 @@ export function Summary({ pack }: { pack: StudyPack }) {
                 Parts of your session the pack does not quote ({pack.uncovered.length} of {pack.passage_count})
               </h3>
               <p className="text-sm text-muted-foreground">
-                Lucy leaves out jokes and small talk. Read these yourself in case they hold teaching the pack missed.
+                WardWise leaves out jokes and small talk. Read these yourself in case they hold teaching the pack missed.
               </p>
               <ul className="flex flex-col gap-2">
                 {pack.uncovered.map((passage, index) => (

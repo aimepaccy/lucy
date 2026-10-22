@@ -16,9 +16,9 @@ type GenerateBarProps = {
   recordingLive: boolean
   slideCount: number
   sendState: SendState
-  // True when the recording or slides changed after Lucy read them.
+  // True when the recording or slides changed after WardWise read them.
   inputsChanged: boolean
-  // True when the student has corrected what Lucy heard and read.
+  // True when the student has corrected what WardWise heard and read.
   corrected: boolean
   writeState: WriteState
   // The text a study pack would be written from, and the server's limits (null until known).
@@ -39,7 +39,7 @@ function describeReceipt({ notes_words, slides, audio, photos }: SessionReceipt)
     parts.push(`${plural(slides.length, 'slide file')} (${formatFileSize(bytes)})`)
   }
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}` : parts[0]
-  return `Lucy received ${list}.`
+  return `WardWise received ${list}.`
 }
 
 export function GenerateBar({
@@ -119,7 +119,7 @@ export function GenerateBar({
 
   const progress =
     sendState.status === 'sending'
-      ? 'Uploading to Lucy'
+      ? 'Uploading to WardWise'
       : sendState.status === 'working'
         ? sendState.step
         : writeState.status === 'writing'
@@ -133,16 +133,16 @@ export function GenerateBar({
     if (writeState.status === 'error' && !inputsChanged) return writeState.message
     if (writeState.status === 'writing') return 'Writing usually takes under a minute.'
     if (tooLong && limits) {
-      return `This is more than Lucy can write from at once (about ${limits.max_pack_words.toLocaleString()} words). Shorten your notes, the transcript or the slide text.`
+      return `This is more than WardWise can write from at once (about ${limits.max_pack_words.toLocaleString()} words). Shorten your notes, the transcript or the slide text.`
     }
     if (askingToReplace) return 'Reading again replaces your corrections. Press "Yes, read again" to continue, or keep editing above.'
     if (inputsChanged) {
       const loss = corrected ? '; this replaces your corrections' : ''
-      return `Your recording, photos or slides changed after Lucy read them. Read again to include the changes${loss}.`
+      return `Your recording, photos or slides changed after WardWise read them. Read again to include the changes${loss}.`
     }
     if (writeState.status === 'done') return 'Your study pack is ready below. Correct the text above and write again if you need to.'
-    if (nothingRead) return 'Lucy could not read anything from this material. See the notes above, then try clearer photos or another file.'
-    return 'Lucy has read your material. Correct anything it got wrong above, then write your study pack.'
+    if (nothingRead) return 'WardWise could not read anything from this material. See the notes above, then try clearer photos or another file.'
+    return 'WardWise has read your material. Correct anything it got wrong above, then write your study pack.'
   }
 
   const message = describeState()

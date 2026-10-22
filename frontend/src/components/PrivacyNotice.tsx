@@ -12,7 +12,7 @@ export function PrivacyNotice() {
       <p>
         <span className="font-semibold">Role-play and teaching only.</span> Never record real patients or add
         anything that could identify one, including in photos of notes. To build a study pack, your content is sent
-        to an outside AI service. Lucy's server deletes your files once it has read them, and keeps the text only
+        to an outside AI service. WardWise's server deletes your files once it has read them, and keeps the text only
         until your browser collects it. Your study packs are saved in this browser only; on a shared computer,
         delete them when you finish.
       </p>

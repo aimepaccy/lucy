@@ -50,7 +50,7 @@ class SlideText(BaseModel):
 
 class Materials(BaseModel):
     transcript: str | None
-    # Handwritten notes as Lucy read them from photos, in the order the photos were added.
+    # Handwritten notes as WardWise read them from photos, in the order the photos were added.
     notes: str | None = None
     slides: list[SlideText]
     warnings: list[str]
@@ -65,7 +65,7 @@ class JobCreated(BaseModel):
 
 
 # What the student sends to have a study pack written: their notes and their corrected copy of
-# what Lucy heard and read. Only text; the files themselves were deleted after reading.
+# what WardWise heard and read. Only text; the files themselves were deleted after reading.
 class SlideSource(BaseModel):
     text: str = Field(max_length=MAX_TEXT_CHARS)
 
@@ -115,7 +115,7 @@ class PackDraft(Strict):
     search_terms: list[str] = Field(description='Search terms for further reading. Never links or references.')
 
 
-# What the browser receives: the AI's work plus Lucy's own checks.
+# What the browser receives: the AI's work plus WardWise's own checks.
 class CheckedPoint(TeachingPoint):
     grounded: bool
 

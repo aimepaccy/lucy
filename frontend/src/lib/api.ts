@@ -18,7 +18,7 @@ export class ApiError extends Error {
   }
 }
 
-const SLOW_UPLOAD = 'Lucy took too long to answer. Check your connection, or send fewer or smaller files.'
+const SLOW_UPLOAD = 'WardWise took too long to answer. Check your connection, or send fewer or smaller files.'
 
 async function request<T>(path: string, init: RequestInit, timeoutMs: number, slowMessage = SLOW_UPLOAD): Promise<T> {
   let response: Response
@@ -26,7 +26,7 @@ async function request<T>(path: string, init: RequestInit, timeoutMs: number, sl
     response = await fetch(`${API_URL}${path}`, { ...init, signal: AbortSignal.timeout(timeoutMs) })
   } catch (error) {
     if (error instanceof DOMException && error.name === 'TimeoutError') throw new ApiError(slowMessage)
-    throw new ApiError('Lucy could not reach its server. Check that it is running, then try again.')
+    throw new ApiError('WardWise could not reach its server. Check that it is running, then try again.')
   }
 
   if (!response.ok) throw new ApiError(await readError(response), response.status)
@@ -54,7 +54,7 @@ export function getLimits(): Promise<Limits> {
   return request<Limits>('/api/limits', {}, CHECK_TIMEOUT_MS)
 }
 
-// Plain JSON this time: only text goes, the student's notes and corrected copy of what Lucy heard and read.
+// Plain JSON this time: only text goes, the student's notes and corrected copy of what WardWise heard and read.
 export function writePack(notes: string, materials: Materials): Promise<{ job_id: string }> {
   const body = JSON.stringify({
     notes,
@@ -66,7 +66,7 @@ export function writePack(notes: string, materials: Materials): Promise<{ job_id
 
 // A GET with the term in the address: the server only looks things up, nothing is stored or changed.
 export function findReading(term: string): Promise<Reading> {
-  const slow = 'Lucy took too long to find reading for this term. Please try again.'
+  const slow = 'WardWise took too long to find reading for this term. Please try again.'
   return request<Reading>(`/api/reading?term=${encodeURIComponent(term)}`, {}, READING_TIMEOUT_MS, slow)
 }
 
@@ -83,7 +83,7 @@ export async function waitForJob(jobId: string, onStep: (step: string) => void):
       failedChecks = 0
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
-        throw new ApiError("Lucy's server restarted before it finished. Please send again.")
+        throw new ApiError("WardWise's server restarted before it finished. Please send again.")
       }
       // A dropped check (no answer at all) may be a Wi-Fi blip: try again, up to three times in a row.
       const noAnswer = error instanceof ApiError && error.status === null
@@ -97,7 +97,7 @@ export async function waitForJob(jobId: string, onStep: (step: string) => void):
     onStep(job.step)
     await wait(POLL_EVERY_MS)
   }
-  throw new ApiError('Lucy is taking longer than expected. Please try again.')
+  throw new ApiError('WardWise is taking longer than expected. Please try again.')
 }
 
 // FastAPI sends errors as { detail: "message" }, or { detail: [...] } for validation errors.

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 export type Theme = 'light' | 'dark'
 
+// The first name stays, like the other browser storage names (index.html reads it too).
 const STORAGE_KEY = 'lucy-theme'
 const darkQuery = '(prefers-color-scheme: dark)'
 

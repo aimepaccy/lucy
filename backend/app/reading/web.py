@@ -7,11 +7,11 @@ from urllib.parse import urlsplit
 import httpx2
 
 # Services ask callers to say who they are; Wikipedia refuses requests without this.
-USER_AGENT = 'Lucy/0.1 (https://github.com/aimepaccy/lucy)'
+USER_AGENT = 'WardWise/0.1 (https://github.com/aimepaccy/wardwise)'
 # A slow service should not hold the page up: give up on connecting after 5 seconds, on answering after 8.
 TIMEOUT = httpx2.Timeout(8.0, connect=5.0)
 
-# Every link Lucy shows must point to one of these hosts, over https. Anything else is dropped.
+# Every link WardWise shows must point to one of these hosts, over https. Anything else is dropped.
 ALLOWED_HOSTS = frozenset({
     'pubmed.ncbi.nlm.nih.gov',
     'www.ncbi.nlm.nih.gov',

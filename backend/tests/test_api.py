@@ -167,7 +167,7 @@ def test_photo_without_handwriting_gets_a_warning(monkeypatch):
     monkeypatch.setattr(providers, 'read_handwriting', lambda jpeg: '')
     state = finished_job(post(photos=[('blank.jpg', photo())]))
     assert state['materials']['notes'] is None
-    assert state['materials']['warnings'] == ['Lucy found no handwriting in blank.jpg.']
+    assert state['materials']['warnings'] == ['WardWise found no handwriting in blank.jpg.']
 
 
 def test_a_turned_down_photo_does_not_stop_the_others(monkeypatch):
@@ -182,7 +182,7 @@ def test_a_turned_down_photo_does_not_stop_the_others(monkeypatch):
     state = finished_job(post(photos=[('blurry.jpg', photo()), ('clear.jpg', photo())]))
     assert state['status'] == 'done'
     assert state['materials']['notes'] == FAKE_HANDWRITING
-    assert state['materials']['warnings'] == ['Lucy could not read blurry.jpg. Try a clearer photo.']
+    assert state['materials']['warnings'] == ['WardWise could not read blurry.jpg. Try a clearer photo.']
 
 
 def test_the_agreed_word_for_no_handwriting_means_empty():
@@ -314,7 +314,7 @@ def test_audio_reaches_the_provider_under_a_generic_name(fake_transcribe):
 def test_slides_without_text_get_a_warning():
     state = finished_job(post(files=[('scanned.pdf', text_pdf(''))]))
     assert state['materials']['warnings'] == [
-        'scanned.pdf has no text Lucy can read. It may contain pictures of slides.'
+        'scanned.pdf has no text WardWise can read. It may contain pictures of slides.'
     ]
 
 

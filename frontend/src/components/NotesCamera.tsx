@@ -12,7 +12,7 @@ type NotesCameraProps = {
 
 let shots = 0
 
-// The camera inside Lucy: a live view and a shutter. Like the microphone, the camera switches off
+// The camera inside WardWise: a live view and a shutter. Like the microphone, the camera switches off
 // as soon as this closes, and a photo exists only in this page until it is sent.
 export function NotesCamera({ room, onCapture, onClose }: NotesCameraProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -93,7 +93,7 @@ export function NotesCamera({ room, onCapture, onClose }: NotesCameraProps) {
           <p role="alert" className="absolute inset-0 grid place-items-center p-6 text-center text-sm text-background">
             <span className="flex items-start gap-2">
               <AlertCircle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              Lucy could not open the camera. Allow camera access in your browser, or add photos instead.
+              WardWise could not open the camera. Allow camera access in your browser, or add photos instead.
             </span>
           </p>
         )}
@@ -121,7 +121,7 @@ export function NotesCamera({ room, onCapture, onClose }: NotesCameraProps) {
           <Camera /> Take photo
         </Button>
         <span className="flex-1 text-xs text-muted-foreground">
-          {room > 0 ? 'No patient details on the page. Hold it flat, in good light, inside the corners.' : 'That is the most Lucy takes at once.'}
+          {room > 0 ? 'No patient details on the page. Hold it flat, in good light, inside the corners.' : 'That is the most WardWise takes at once.'}
         </span>
         <Button variant="outline" onClick={onClose}>
           Done

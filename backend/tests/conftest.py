@@ -17,7 +17,7 @@ def private_jobs_folder(monkeypatch, tmp_path):
     """Each test gets its own folder for uploads, so tests never touch the real one."""
     from app import jobs
 
-    monkeypatch.setattr(jobs, 'JOBS_ROOT', tmp_path / 'lucy-jobs')
+    monkeypatch.setattr(jobs, 'JOBS_ROOT', tmp_path / 'wardwise-jobs')
 
 
 @pytest.fixture(autouse=True)

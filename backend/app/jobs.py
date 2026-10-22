@@ -18,9 +18,9 @@ from app.schemas import AudioKind, JobState, Materials, PackRequest, SlideKind, 
 
 RESULT_TTL_SECONDS = 15 * 60
 # Every job's uploads live under this one folder, so leftovers can be found and removed.
-JOBS_ROOT = Path(tempfile.gettempdir()) / 'lucy-jobs'
+JOBS_ROOT = Path(tempfile.gettempdir()) / 'wardwise-jobs'
 
-log = logging.getLogger('lucy.jobs')
+log = logging.getLogger('wardwise.jobs')
 
 
 @dataclass
@@ -116,9 +116,9 @@ def _read_slides(slides: list[SlideInput], warnings: list[str]) -> list[SlideTex
             warnings.append(f'{slide.name} could not be read.')
             continue
         if not text:
-            warnings.append(f'{slide.name} has no text Lucy can read. It may contain pictures of slides.')
+            warnings.append(f'{slide.name} has no text WardWise can read. It may contain pictures of slides.')
         if pages > extract.MAX_PAGES:
-            warnings.append(f'{slide.name} is long, so Lucy read only the first {extract.MAX_PAGES} pages.')
+            warnings.append(f'{slide.name} is long, so WardWise read only the first {extract.MAX_PAGES} pages.')
         results.append(SlideText(name=slide.name, kind=slide.kind, pages=pages, text=text))
     return results
 
@@ -138,12 +138,12 @@ def _read_photos(photos: list[PhotoInput], warnings: list[str]) -> str | None:
             warnings.append(f'{photo.name} has too much writing to read at once. Try half a page per photo.')
             continue
         except providers.UnreadablePhoto:
-            warnings.append(f'Lucy could not read {photo.name}. Try a clearer photo.')
+            warnings.append(f'WardWise could not read {photo.name}. Try a clearer photo.')
             continue
         if text:
             pages.append(text)
         else:
-            warnings.append(f'Lucy found no handwriting in {photo.name}.')
+            warnings.append(f'WardWise found no handwriting in {photo.name}.')
     return '\n\n'.join(pages) if pages else None
 
 

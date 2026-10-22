@@ -24,7 +24,7 @@ function recordedMs({ totalMs, since }: Clock) {
 
 function describeMicrophoneError(error: unknown) {
   const name = error instanceof DOMException ? error.name : ''
-  if (name === 'NotAllowedError') return 'Lucy needs permission to use the microphone. Allow it in the address bar, then try again.'
+  if (name === 'NotAllowedError') return 'WardWise needs permission to use the microphone. Allow it in the address bar, then try again.'
   if (name === 'NotFoundError') return 'No microphone was found on this device. You can upload an audio file instead.'
   if (name === 'NotReadableError') return 'The microphone is busy in another app. Close that app, then try again.'
   return 'The microphone could not start. You can upload an audio file instead.'

@@ -12,7 +12,7 @@ type StepsProps = {
   steps: StepKey[]
   // The step in progress, or 'done' once the study pack is ready.
   current: StepKey | 'done'
-  // True while Lucy is working on the current step (not waiting for the student).
+  // True while WardWise is working on the current step (not waiting for the student).
   busy: boolean
 }
 

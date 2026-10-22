@@ -1,11 +1,11 @@
-# Lucy: MVP plan
+# WardWise: MVP plan
 
 Agreed 2026-10-10. Changes are added at the end under Amendments, with a date.
 
-## What Lucy does
-1. The student opens Lucy and adds any of: an audio recording made in the app (or an uploaded audio file), typed notes, and slides (.pptx or PDF).
+## What WardWise does
+1. The student opens WardWise and adds any of: an audio recording made in the app (or an uploaded audio file), typed notes, and slides (.pptx or PDF).
 2. They press **Generate**.
-3. Lucy transcribes the audio, reads the slides, and produces a study pack:
+3. WardWise transcribes the audio, reads the slides, and produces a study pack:
    - a summary focused on the teaching points
    - flashcards
    - an exam-style quiz (single best answer, with an explanation for every option)
@@ -60,5 +60,5 @@ Each phase: preview, build, walkthrough, limited retype, explain-back, Quality r
 
 ## Amendments
 - 2026-10-10: Product named Lucy. Phase 11 reframed from a formal pitch to one-on-one demos.
-- 2026-10-12: Phase 3 split into 3a (recording) and 3b (transcription, slide text, background jobs). Phase 4 adds an editable transcript: the student corrects what Lucy heard before the AI writes the study pack.
+- 2026-10-12: Phase 3 split into 3a (recording) and 3b (transcription, slide text, background jobs). Phase 4 adds an editable transcript: the student corrects what WardWise heard before the AI writes the study pack.
 - 2026-10-13: Phase 4 split into 4a (edit before writing) and 4b (the generator). 4b adds a grounding check: every flashcard and quiz question carries a short quote from the material, and the server confirms the quote is really there before showing the item.

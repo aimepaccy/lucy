@@ -1,4 +1,4 @@
-"""Further reading: real links for a search term, from services Lucy trusts. The AI never writes links."""
+"""Further reading: real links for a search term, from services WardWise trusts. The AI never writes links."""
 
 import asyncio
 import logging
@@ -11,10 +11,10 @@ from app.reading import ncbi, search_pages, web, wikipedia, youtube
 from app.reading.cache import TimedCache
 from app.schemas import Reading, ReadingLink, ReadingSource
 
-log = logging.getLogger('lucy.reading')
+log = logging.getLogger('wardwise.reading')
 
 MAX_TERM_CHARS = 120
-# Each source gets this long in all (including its wait in the NCBI queue) before Lucy moves on without it.
+# Each source gets this long in all (including its wait in the NCBI queue) before WardWise moves on without it.
 SOURCE_TIMEOUT_SECONDS = 12
 # Letters, digits, spaces and a little punctuation. Brackets and quotes go, so a term cannot change
 # the shape of a search (in PubMed, "asthma[ti]" or a closing bracket would).
@@ -71,12 +71,12 @@ async def _ask(source: Source, term: str) -> ReadingSource:
         if youtube.unavailable():
             return answer.model_copy(update={'status': 'failed', 'note': 'Videos are unavailable right now.'})
         return answer.model_copy(
-            update={'status': 'failed', 'note': 'Lucy is still loading the video list. Try again in a minute.'}
+            update={'status': 'failed', 'note': 'WardWise is still loading the video list. Try again in a minute.'}
         )
     except Exception as error:  # noqa: BLE001 - one source failing must never take the others down
         # Only the kind of error is logged: its message can contain the full address, and with it a key.
         log.warning('%s lookup failed: %s', source.name, type(error).__name__)
-        return answer.model_copy(update={'status': 'failed', 'note': f'Lucy could not reach {source.name} just now.'})
+        return answer.model_copy(update={'status': 'failed', 'note': f'WardWise could not reach {source.name} just now.'})
 
     safe = [link for link in links if web.allowed(link.url)]
     if len(safe) < len(links):

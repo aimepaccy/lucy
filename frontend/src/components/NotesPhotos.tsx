@@ -68,7 +68,7 @@ export function NotesPhotos({ photos, onAdd, onRemove }: NotesPhotosProps) {
   }
 
   return (
-    <Panel icon={NotebookPen} title="Handwritten notes" description="Photos of the notes you wrote by hand. Lucy reads them.">
+    <Panel icon={NotebookPen} title="Handwritten notes" description="Photos of the notes you wrote by hand. WardWise reads them.">
       {cameraOpen ? (
         <NotesCamera
           room={MAX_PHOTOS - photos.length}

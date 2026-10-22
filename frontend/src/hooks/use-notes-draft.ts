@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
+// The first name stays, so "Delete all" can still find a draft saved before the rename.
 const STORAGE_KEY = 'lucy-notes-draft'
 // Saved this long after typing stops, not on every keystroke.
 const SAVE_AFTER_MS = 500

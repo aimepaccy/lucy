@@ -55,7 +55,7 @@ def test_nothing_to_write_from():
 def test_too_much_material_is_refused_before_any_ai_call(fake_writer):
     response = client.post('/api/packs', json={'transcript': 'wheeze ' * 20_000})
     assert response.status_code == 413
-    assert 'Lucy can write from about' in response.json()['detail']
+    assert 'WardWise can write from about' in response.json()['detail']
     assert fake_writer['calls'] == []
 
 
@@ -68,7 +68,7 @@ def test_broken_answer_is_tried_once_more(fake_writer):
     fake_writer['answers'].extend(['{"title": "half a pack"', providers.InvalidOutput('broke the form')])
     state = write(notes=FAKE_NOTES)
     assert state['status'] == 'failed'
-    assert state['error'] == 'Lucy could not write a usable study pack this time. Please try again.'
+    assert state['error'] == 'WardWise could not write a usable study pack this time. Please try again.'
     assert len(fake_writer['calls']) == 2
 
 
@@ -213,7 +213,7 @@ def test_pack_requests_have_a_small_body_limit():
     assert response.status_code == 413
 
 
-# The real write_json, talking to a fake OpenAI client, to check what Lucy actually sends.
+# The real write_json, talking to a fake OpenAI client, to check what WardWise actually sends.
 class FakeOpenAI:
     sent: dict = {}
     error: Exception | None = None

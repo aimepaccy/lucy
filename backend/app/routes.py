@@ -94,7 +94,7 @@ def receive_session(
             raise HTTPException(status_code=413, detail=f'{name} is larger than {MAX_AUDIO_MB} MB.')
         kind = detect_audio_kind(audio)
         if kind is None:
-            raise HTTPException(status_code=415, detail=f'{name} is not an audio format Lucy can read.')
+            raise HTTPException(status_code=415, detail=f'{name} is not an audio format WardWise can read.')
         audio_receipt = AudioReceipt(name=name, kind=kind, size_bytes=size)
 
     photo_receipts = []
@@ -154,7 +154,7 @@ def write_pack(request: PackRequest, background: BackgroundTasks) -> PackJobCrea
         raise HTTPException(
             status_code=413,
             detail=(
-                f'Your material is about {error.words:,} words, and Lucy can write from about '
+                f'Your material is about {error.words:,} words, and WardWise can write from about '
                 f'{error.allowed_words:,} at a time. Shorten {advice}.'
             ),
         ) from error

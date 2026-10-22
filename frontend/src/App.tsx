@@ -35,7 +35,7 @@ export default function App() {
   const [slides, setSlides] = useState<SlideFile[]>([])
   const [photos, setPhotos] = useState<NotePhoto[]>([])
   const [sendState, setSendState] = useState<SendState>({ status: 'idle' })
-  // The student's corrected copy of what Lucy heard and read; the AI will write from this.
+  // The student's corrected copy of what WardWise heard and read; the AI will write from this.
   const [draft, setDraft] = useState<Materials | null>(null)
   const [writeState, setWriteState] = useState<WriteState>({ status: 'idle' })
   // The pack on screen: just written, or opened from My packs. It stays until another replaces it.
@@ -79,7 +79,7 @@ export default function App() {
       const { job_id, receipt } = await sendSession('', slides, recording, photos)
       setSendState({ status: 'working', step: 'Waiting to start', receipt })
       const job = await waitForJob(job_id, (step) => setSendState({ status: 'working', step, receipt }))
-      if (!job.materials) throw new ApiError('Lucy could not read your material.')
+      if (!job.materials) throw new ApiError('WardWise could not read your material.')
       materials = job.materials
       setSendState({ status: 'ready', materials, recording, slides, photos })
       setDraft(materials)
@@ -95,16 +95,16 @@ export default function App() {
     const run = ++latestWrite.current
     const isLatest = () => run === latestWrite.current
     const update = (state: WriteState) => isLatest() && setWriteState(state)
-    // The recording this pack comes from: the one Lucy read, since a changed recording means reading again.
+    // The recording this pack comes from: the one WardWise read, since a changed recording means reading again.
     const source = recording
     const sourcePhotos = photos
-    update({ status: 'writing', step: 'Sending to Lucy' })
+    update({ status: 'writing', step: 'Sending to WardWise' })
     let record: SavedPack
     try {
       const notes = materials.notes ?? ''
       const { job_id } = await writePack(notes, materials)
       const job = await waitForJob(job_id, (step) => update({ status: 'writing', step }))
-      if (!job.pack) throw new ApiError('Lucy could not write your study pack.')
+      if (!job.pack) throw new ApiError('WardWise could not write your study pack.')
       record = newRecord(job.pack, {
         notes,
         transcript: materials.transcript,
@@ -144,7 +144,7 @@ export default function App() {
   }
 
   // Adding or removing a slide makes a new list, and a new recording is a new object, so comparing
-  // them with what Lucy read tells us whether the panel still matches the inputs.
+  // them with what WardWise read tells us whether the panel still matches the inputs.
   const inputsChanged =
     sendState.status === 'ready' &&
     (sendState.recording !== recording || sendState.slides !== slides || sendState.photos !== photos)

@@ -1,4 +1,4 @@
-"""Radiopaedia and MSD Manuals have no free API, so Lucy links to their own search page for the term."""
+"""Radiopaedia and MSD Manuals have no free API, so WardWise links to their own search page for the term."""
 
 from urllib.parse import urlencode
 

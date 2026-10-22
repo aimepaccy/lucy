@@ -9,10 +9,10 @@ import { hasCorrections, hasReviewable } from '@/lib/materials'
 import type { Materials } from '@/types'
 
 type MaterialsPanelProps = {
-  // What Lucy heard and read, unchanged, and the student's corrected copy of it.
+  // What WardWise heard and read, unchanged, and the student's corrected copy of it.
   heard: Materials
   draft: Materials
-  // While Lucy writes, the text is read-only: the pack is written from the text as it was when sent.
+  // While WardWise writes, the text is read-only: the pack is written from the text as it was when sent.
   locked: boolean
   onChange: (draft: Materials) => void
   onClose: () => void
@@ -42,14 +42,14 @@ export function MaterialsPanel({ heard, draft, locked, onChange, onClose }: Mate
     <motion.div initial="hidden" animate="show">
       <Panel
         icon={ScanText}
-        title="What Lucy heard and read"
+        title="What WardWise heard and read"
         description={
           hasReviewable(heard)
-            ? 'Correct anything Lucy got wrong. Your study pack is written from your corrected version. Transcripts and notes are read by AI and can contain mistakes.'
-            : 'Lucy could not read your files. Try adding them again, or other ones.'
+            ? 'Correct anything WardWise got wrong. Your study pack is written from your corrected version. Transcripts and notes are read by AI and can contain mistakes.'
+            : 'WardWise could not read your files. Try adding them again, or other ones.'
         }
         aside={
-          <Button ref={closeRef} variant="ghost" size="icon" onClick={requestClose} aria-label="Close what Lucy heard and read">
+          <Button ref={closeRef} variant="ghost" size="icon" onClick={requestClose} aria-label="Close what WardWise heard and read">
             <X />
           </Button>
         }

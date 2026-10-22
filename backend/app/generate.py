@@ -1,4 +1,4 @@
-"""Writing the study pack: instructions, token budget, validation and Lucy's own checks."""
+"""Writing the study pack: instructions, token budget, validation and WardWise's own checks."""
 
 import logging
 import random
@@ -11,7 +11,7 @@ from app import providers, reading
 from app.config import get_settings
 from app.schemas import CheckedFlashcard, CheckedPoint, CheckedQuestion, Option, PackDraft, PackRequest, StudyPack
 
-log = logging.getLogger('lucy.generate')
+log = logging.getLogger('wardwise.generate')
 
 # Room kept for the AI's answer, its silent reasoning, and these instructions with the form.
 # Measured on 2026-10-13 with the overview and quoted teaching points: about 3,950 tokens per pack
@@ -23,7 +23,7 @@ CHARS_PER_TOKEN = 3.5
 # Measured on a role-played round: about 6 characters per word, spaces included. Words shown to the student
 # are worked out from characters at this rate, so the number shown is the number the check applies.
 CHARS_PER_WORD = 6
-# The tags Lucy wraps around the material (<material>, <notes>, <transcript>, five <slides>) take about 220
+# The tags WardWise wraps around the material (<material>, <notes>, <transcript>, five <slides>) take about 220
 # characters. The limit shown to the student leaves room for them, so text under it is never refused.
 TAG_ALLOWANCE = 250
 # A quote shorter than this proves little: "asthma" appears in any asthma session.
@@ -66,7 +66,7 @@ not give (for example, do not turn "oxygen" into "high-flow oxygen").
 from one continuous passage of the material, that supports it. Do not join separate passages or leave \
 words out.
 - Questions are phrased positively. No "NOT" or "EXCEPT" questions.
-- Explanations never refer to other options by letter: Lucy shuffles the options.
+- Explanations never refer to other options by letter: WardWise shuffles the options.
 - Never write links, references, citations, guideline names or journal names that are not in the material.
 - Use plain British English and standard drug names.
 """
@@ -186,7 +186,7 @@ def _no_links(text: str) -> str:
 
 
 def _shuffled(question) -> tuple[list[Option], str]:
-    """Models favour some answer positions, so Lucy shuffles. Seeded by the stem: the same question, the same order."""
+    """Models favour some answer positions, so WardWise shuffles. Seeded by the stem: the same question, the same order."""
     correct = question.options[LETTERS.index(question.answer)]
     options = list(question.options)
     random.Random(question.stem).shuffle(options)
@@ -248,7 +248,7 @@ def passages(request: PackRequest) -> list[str]:
 def uncovered(request: PackRequest, quotes: list[str]) -> tuple[list[str], int]:
     """Passages that no quote in the pack comes from, and the number of passages in all.
 
-    The AI can leave a topic out without saying so. Every item carries a quote, so Lucy can show the
+    The AI can leave a topic out without saying so. Every item carries a quote, so WardWise can show the
     student which parts of the session the pack does not quote, for them to read themselves. Only the
     place each quote was actually found counts: when in doubt, a passage is shown, not hidden.
     """
@@ -269,7 +269,7 @@ def uncovered(request: PackRequest, quotes: list[str]) -> tuple[list[str], int]:
 
 
 def check(draft: PackDraft, material: str, request: PackRequest) -> StudyPack:
-    """Lucy's own checks on the AI's work, before the student sees it."""
+    """WardWise's own checks on the AI's work, before the student sees it."""
     points = [point for point in draft.summary if point.text.strip()][:MAX_SUMMARY]
     if not points:
         raise providers.InvalidOutput('The AI wrote no teaching points.')
@@ -329,4 +329,4 @@ def write_pack(request: PackRequest) -> StudyPack:
             continue
         log.info('Study pack written: about %d tokens of material, %d used in all', estimate_tokens(material), used)
         return pack
-    raise providers.ProviderError('Lucy could not write a usable study pack this time. Please try again.') from last_error
+    raise providers.ProviderError('WardWise could not write a usable study pack this time. Please try again.') from last_error
