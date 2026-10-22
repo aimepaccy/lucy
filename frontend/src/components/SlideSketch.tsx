@@ -1,6 +1,4 @@
-import { useId } from 'react'
-import { motion, useReducedMotion } from 'motion/react'
-import { cn } from '@/lib/utils'
+import { Sketch, Strokes } from '@/components/Sketch'
 
 // A pencil concept sketch: a slide on an easel, a page arriving, and a pencil left on the desk.
 const graphite = [
@@ -31,40 +29,10 @@ const ink = [
 ]
 
 export function SlideSketch({ replay, className }: { replay: boolean; className?: string }) {
-  const filterId = useId()
-  const still = useReducedMotion()
-
   return (
-    <svg viewBox="0 0 156 100" className={cn('overflow-visible', className)} aria-hidden="true">
-      <defs>
-        {/* A slight wobble, as a hand-held pencil gives. */}
-        <filter id={filterId}>
-          <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="2" seed="3" />
-          <feDisplacementMap in="SourceGraphic" scale="1.6" />
-        </filter>
-      </defs>
-      {/* A new key on each drag redraws the sketch. */}
-      <g key={replay ? 'again' : 'first'} filter={`url(#${filterId})`} fill="none" strokeLinecap="round" strokeLinejoin="round">
-        {graphite.map((d, i) => (
-          <Stroke key={d} d={d} order={i} still={still ?? false} className="stroke-muted-foreground" width={1.2} />
-        ))}
-        {ink.map((d, i) => (
-          <Stroke key={d} d={d} order={graphite.length + i} still={still ?? false} className="stroke-primary" width={1} />
-        ))}
-      </g>
-    </svg>
-  )
-}
-
-function Stroke({ d, order, still, className, width }: { d: string; order: number; still: boolean; className: string; width: number }) {
-  return (
-    <motion.path
-      d={d}
-      className={className}
-      strokeWidth={width}
-      initial={{ pathLength: still ? 1 : 0 }}
-      animate={{ pathLength: 1 }}
-      transition={{ duration: 0.45, delay: 0.4 + order * 0.07, ease: 'easeInOut' }}
-    />
+    <Sketch viewBox="0 0 156 100" replay={replay} className={className}>
+      <Strokes paths={graphite} tone="graphite" />
+      <Strokes paths={ink} tone="ink" start={graphite.length} />
+    </Sketch>
   )
 }

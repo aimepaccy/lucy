@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, Camera, NotebookPen, X } from 'lucide-react'
+import { AlertCircle, NotebookPen, X } from 'lucide-react'
+import { NotesSketch } from '@/components/NotesSketch'
 import { Panel } from '@/components/Panel'
 import { formatFileSize } from '@/lib/format'
 import { spring } from '@/lib/motion'
@@ -80,9 +81,7 @@ export function NotesPhotos({ photos, onAdd, onRemove }: NotesPhotosProps) {
           dragging ? 'border-primary bg-accent' : 'border-input hover:border-primary/50 hover:bg-accent/40',
         )}
       >
-        <span className="grid size-12 place-items-center rounded-full bg-accent text-accent-foreground">
-          <Camera className="size-5" aria-hidden="true" />
-        </span>
+        <NotesSketch replay={dragging} className="h-24 w-auto" />
         <span className="text-sm font-medium">
           {dragging ? 'Drop to add' : (
             <>
@@ -135,7 +134,7 @@ export function NotesPhotos({ photos, onAdd, onRemove }: NotesPhotosProps) {
               exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
               transition={spring}
               title={`${photo.file.name} · ${formatFileSize(photo.file.size)}`}
-              className="relative aspect-[3/4] overflow-hidden rounded-md border bg-background/60"
+              className="relative aspect-3/4 overflow-hidden rounded-md border bg-background/60"
             >
               <Thumbnail file={photo.file} />
               <span className="absolute bottom-1 left-1 rounded bg-background/85 px-1.5 text-xs font-medium tabular-nums">
