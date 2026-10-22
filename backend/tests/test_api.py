@@ -170,6 +170,29 @@ def test_photo_without_handwriting_gets_a_warning(monkeypatch):
     assert state['materials']['warnings'] == ['Lucy found no handwriting in blank.jpg.']
 
 
+def test_a_turned_down_photo_does_not_stop_the_others(monkeypatch):
+    def read(jpeg):
+        if read.calls == 0:
+            read.calls += 1
+            raise providers.UnreadablePhoto('The photo reading service could not read this photo.')
+        return FAKE_HANDWRITING
+
+    read.calls = 0
+    monkeypatch.setattr(providers, 'read_handwriting', read)
+    state = finished_job(post(photos=[('blurry.jpg', photo()), ('clear.jpg', photo())]))
+    assert state['status'] == 'done'
+    assert state['materials']['notes'] == FAKE_HANDWRITING
+    assert state['materials']['warnings'] == ['Lucy could not read blurry.jpg. Try a clearer photo.']
+
+
+def test_the_agreed_word_for_no_handwriting_means_empty():
+    assert providers.handwriting_from('NONE') == ''
+    assert providers.handwriting_from('<think>A blank page.</think>\nNone.') == ''
+    assert providers.handwriting_from('Pred 40 mg x5 days') == 'Pred 40 mg x5 days'
+    # The word inside real notes is kept.
+    assert providers.handwriting_from('Wheeze: none at rest') == 'Wheeze: none at rest'
+
+
 def test_damaged_photo_gets_a_warning_not_a_failure():
     state = finished_job(post(photos=[('broken.jpg', photo()[:30])]))
     assert state['status'] == 'done'

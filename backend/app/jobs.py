@@ -131,7 +131,12 @@ def _read_photos(photos: list[PhotoInput], warnings: list[str]) -> str | None:
         except extract.UnreadableFile:
             warnings.append(f'{photo.name} could not be read as a photo.')
             continue
-        text = providers.read_handwriting(jpeg)
+        # A busy or unreachable service still fails the job; a turned-down photo only warns.
+        try:
+            text = providers.read_handwriting(jpeg)
+        except providers.UnreadablePhoto:
+            warnings.append(f'Lucy could not read {photo.name}. Try a clearer photo.')
+            continue
         if text:
             pages.append(text)
         else:

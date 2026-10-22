@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertCircle, NotebookPen, X } from 'lucide-react'
+import { AlertCircle, Camera, NotebookPen, X } from 'lucide-react'
+import { NotesCamera } from '@/components/NotesCamera'
 import { NotesSketch } from '@/components/NotesSketch'
 import { Panel } from '@/components/Panel'
+import { Button } from '@/components/ui/button'
 import { formatFileSize } from '@/lib/format'
 import { spring } from '@/lib/motion'
 import { cn } from '@/lib/utils'
@@ -25,9 +27,10 @@ export function NotesPhotos({ photos, onAdd, onRemove }: NotesPhotosProps) {
   const dropRef = useRef<HTMLButtonElement>(null)
   const [dragging, setDragging] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [cameraOpen, setCameraOpen] = useState(false)
 
   // A convenience check only. The server checks every photo again, by its content.
-  function addFiles(list: FileList | null) {
+  function addFiles(list: FileList | File[] | null) {
     if (!list) return
     const accepted: NotePhoto[] = []
     const problems: string[] = []
@@ -66,44 +69,63 @@ export function NotesPhotos({ photos, onAdd, onRemove }: NotesPhotosProps) {
 
   return (
     <Panel icon={NotebookPen} title="Handwritten notes" description="Photos of the notes you wrote by hand. Lucy reads them.">
-      <motion.button
-        ref={dropRef}
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        animate={{ scale: dragging ? 1.02 : 1 }}
-        whileTap={{ scale: 0.99 }}
-        transition={spring}
-        className={cn(
-          'hand-radius flex w-full flex-col items-center gap-2 border-2 border-dashed px-4 py-5 text-center transition-colors outline-none focus-visible:ring-4 focus-visible:ring-ring/30',
-          dragging ? 'border-primary bg-accent' : 'border-input hover:border-primary/50 hover:bg-accent/40',
-        )}
-      >
-        <NotesSketch replay={dragging} className="h-24 w-auto" />
-        <span className="text-sm font-medium">
-          {dragging ? 'Drop to add' : (
-            <>
-              Drop photos here or <span className="text-primary underline-offset-4 hover:underline">browse</span>
-            </>
-          )}
-        </span>
-        <span className="text-xs text-muted-foreground">
-          One photo a page, up to {MAX_PHOTOS}. No patient names or details in the photo.
-        </span>
-      </motion.button>
-      <input
-        ref={inputRef}
-        type="file"
-        accept={TYPES.join(',')}
-        multiple
-        className="hidden"
-        onChange={(event) => {
-          addFiles(event.target.files)
-          event.target.value = ''
-        }}
-      />
+      {cameraOpen ? (
+        <NotesCamera
+          room={MAX_PHOTOS - photos.length}
+          onCapture={(file) => addFiles([file])}
+          onClose={() => setCameraOpen(false)}
+        />
+      ) : (
+        <>
+          <motion.button
+            ref={dropRef}
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            animate={{ scale: dragging ? 1.02 : 1 }}
+            whileTap={{ scale: 0.99 }}
+            transition={spring}
+            className={cn(
+              'hand-radius flex w-full flex-col items-center gap-2 border-2 border-dashed px-4 py-5 text-center transition-colors outline-none focus-visible:ring-4 focus-visible:ring-ring/30',
+              dragging ? 'border-primary bg-accent' : 'border-input hover:border-primary/50 hover:bg-accent/40',
+            )}
+          >
+            <NotesSketch replay={dragging} className="h-24 w-auto" />
+            <span className="text-sm font-medium">
+              {dragging ? 'Drop to add' : (
+                <>
+                  Drop photos here or <span className="text-primary underline-offset-4 hover:underline">browse</span>
+                </>
+              )}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              One photo a page, up to {MAX_PHOTOS}. No patient names or details in the photo.
+            </span>
+          </motion.button>
+          <input
+            ref={inputRef}
+            type="file"
+            accept={TYPES.join(',')}
+            multiple
+            className="hidden"
+            onChange={(event) => {
+              addFiles(event.target.files)
+              event.target.value = ''
+            }}
+          />
+          <Button
+            variant="link"
+            size="sm"
+            className="mt-3 h-auto self-center p-0 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:no-underline"
+            aria-disabled={photos.length >= MAX_PHOTOS}
+            onClick={() => photos.length < MAX_PHOTOS && setCameraOpen(true)}
+          >
+            <Camera /> Or take photos with the camera
+          </Button>
+        </>
+      )}
 
       <AnimatePresence>
         {error && (
