@@ -15,6 +15,7 @@ Lucy finds relevant passages in a trusted library (StatPearls, WHO and national 
 - Retrieved passages cost tokens, which shortens the session that fits on the free tier.
 - Corrections of misheard words stay visible ("heard as 'asinaa'").
 - Phase 8's chat needs retrieval too; build the two together.
+- Decided 2026-10-22: large literature sources (OpenEvidence, if access comes) belong in the chat, not in the pack. Retrieval for the pack, if built, stays with open and local sources.
 
 ### Student accounts
 Each student signs in and finds their packs on any device.
