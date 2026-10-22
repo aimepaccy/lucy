@@ -4,12 +4,13 @@ import zipfile
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from PIL import Image
 from pptx import Presentation
 
 from app import jobs, providers
 from app.limits import BodySizeLimit
 from app.main import app
-from tests.conftest import FAKE_TRANSCRIPT
+from tests.conftest import FAKE_HANDWRITING, FAKE_TRANSCRIPT
 
 client = TestClient(app)
 
@@ -63,10 +64,22 @@ def text_pptx(title: str, notes: str) -> bytes:
     return buffer.getvalue()
 
 
-def post(notes: str = '', files: list[tuple[str, bytes]] | None = None, audio: tuple[str, bytes] | None = None):
+def photo(kind: str = 'JPEG', size: tuple[int, int] = (40, 30), exif: Image.Exif | None = None) -> bytes:
+    buffer = io.BytesIO()
+    Image.new('RGB', size, 'white').save(buffer, kind, **({'exif': exif} if exif else {}))
+    return buffer.getvalue()
+
+
+def post(
+    notes: str = '',
+    files: list[tuple[str, bytes]] | None = None,
+    audio: tuple[str, bytes] | None = None,
+    photos: list[tuple[str, bytes]] | None = None,
+):
     parts = [('slides', (name, content)) for name, content in files or []]
     if audio:
         parts.append(('audio', audio))
+    parts += [('photos', (name, content)) for name, content in photos or []]
     return client.post('/api/sessions', data={'notes': notes}, files=parts or None)
 
 
@@ -93,6 +106,8 @@ def test_limits():
         'max_slide_files': 5,
         'max_slide_mb': 25,
         'max_audio_mb': 25,
+        'max_photos': 5,
+        'max_photo_mb': 15,
         'max_notes_chars': 20_000,
         'max_pack_words': 1591,
         'max_pack_chars': 9550,
@@ -109,7 +124,56 @@ def test_receipt_for_notes_and_slides():
             {'name': 'b.pptx', 'kind': 'pptx', 'size_bytes': len(pptx)},
         ],
         'audio': None,
+        'photos': [],
     }
+
+
+def test_photo_formats_are_accepted():
+    shots = [('page.jpg', photo('JPEG')), ('page.png', photo('PNG')), ('page.webp', photo('WEBP'))]
+    receipt = receipt_of(post(photos=shots))
+    assert [entry['kind'] for entry in receipt['photos']] == ['jpeg', 'png', 'webp']
+
+
+def test_renamed_photo_is_rejected():
+    assert post(photos=[('notes.jpg', PDF)]).status_code == 415
+
+
+def test_too_many_photos():
+    assert post(photos=[(f'page-{n}.jpg', photo()) for n in range(6)]).status_code == 422
+
+
+def test_photo_over_15_mb():
+    assert post(photos=[('huge.jpg', photo() + bytes(15 * 1024 * 1024))]).status_code == 413
+
+
+def test_job_reads_handwritten_notes_in_order(fake_read_handwriting):
+    state = finished_job(post(photos=[('page-1.png', photo('PNG')), ('page-2.jpg', photo())]))
+    assert state['status'] == 'done'
+    assert state['materials']['notes'] == f'{FAKE_HANDWRITING}\n\n{FAKE_HANDWRITING}'
+    # Every photo reaches the vision model as a JPEG, whatever it was sent as.
+    assert all(jpeg.startswith(b'\xff\xd8\xff') for jpeg in fake_read_handwriting)
+
+
+def test_photos_are_made_smaller_and_lose_their_metadata(fake_read_handwriting):
+    exif = Image.Exif()
+    exif[0x010F] = 'Phone maker'  # Camera make; GPS position lives in the same block.
+    finished_job(post(photos=[('big.jpg', photo(size=(4000, 3000), exif=exif))]))
+    sent = Image.open(io.BytesIO(fake_read_handwriting[0]))
+    assert max(sent.size) == 2048
+    assert len(sent.getexif()) == 0
+
+
+def test_photo_without_handwriting_gets_a_warning(monkeypatch):
+    monkeypatch.setattr(providers, 'read_handwriting', lambda jpeg: '')
+    state = finished_job(post(photos=[('blank.jpg', photo())]))
+    assert state['materials']['notes'] is None
+    assert state['materials']['warnings'] == ['Lucy found no handwriting in blank.jpg.']
+
+
+def test_damaged_photo_gets_a_warning_not_a_failure():
+    state = finished_job(post(photos=[('broken.jpg', photo()[:30])]))
+    assert state['status'] == 'done'
+    assert state['materials']['warnings'] == ['broken.jpg could not be read as a photo.']
 
 
 def test_audio_formats_from_browsers_are_accepted():

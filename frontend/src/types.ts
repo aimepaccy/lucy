@@ -4,6 +4,12 @@ export type SlideFile = {
   kind: 'pdf' | 'pptx'
 }
 
+// A photo of handwritten notes. The order they were added is the order of the pages.
+export type NotePhoto = {
+  id: string
+  file: File
+}
+
 export type Recording = {
   file: Blob
   name: string
@@ -17,6 +23,7 @@ export type SessionReceipt = {
   notes_words: number
   slides: { name: string; kind: SlideFile['kind']; size_bytes: number }[]
   audio: { name: string; kind: string; size_bytes: number } | null
+  photos: { name: string; kind: string; size_bytes: number }[]
 }
 
 // Mirrors JobCreated, Materials and JobState in backend/app/schemas.py.
@@ -30,6 +37,8 @@ export type Limits = {
   max_slide_files: number
   max_slide_mb: number
   max_audio_mb: number
+  max_photos: number
+  max_photo_mb: number
   max_notes_chars: number
   max_pack_words: number
   max_pack_chars: number
@@ -40,6 +49,8 @@ export type PackSize = { chars: number }
 
 export type Materials = {
   transcript: string | null
+  // Handwritten notes as Lucy read them from the photos.
+  notes: string | null
   slides: { name: string; kind: SlideFile['kind']; pages: number; text: string }[]
   warnings: string[]
 }
@@ -109,6 +120,6 @@ export type SendState =
   | { status: 'sending' }
   | { status: 'working'; step: string; receipt: SessionReceipt }
   // `materials` is what Lucy produced, kept unchanged; the student's corrections live in App.
-  // `recording` and `slides` are the inputs Lucy read, to notice if they change afterwards.
-  | { status: 'ready'; materials: Materials; recording: Recording | null; slides: SlideFile[] }
+  // `recording`, `slides` and `photos` are the inputs Lucy read, to notice if they change afterwards.
+  | { status: 'ready'; materials: Materials; recording: Recording | null; slides: SlideFile[]; photos: NotePhoto[] }
   | { status: 'error'; message: string }

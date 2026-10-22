@@ -8,7 +8,7 @@ import { Hero } from '@/components/Hero'
 import { KintsugiSeam } from '@/components/Kintsugi'
 import { Library } from '@/components/Library'
 import { MaterialsPanel } from '@/components/MaterialsPanel'
-import { NotesEditor } from '@/components/NotesEditor'
+import { NotesPhotos } from '@/components/NotesPhotos'
 import { PackView, type SaveStatus } from '@/components/PackView'
 import { PrivacyNotice } from '@/components/PrivacyNotice'
 import { Recorder } from '@/components/Recorder'
@@ -19,19 +19,21 @@ import { useLimits } from '@/hooks/use-limits'
 import { useNotesDraft } from '@/hooks/use-notes-draft'
 import { useTheme } from '@/hooks/use-theme'
 import { ApiError, sendSession, waitForJob, writePack } from '@/lib/api'
-import { countWords } from '@/lib/format'
 import { hasCorrections, needsCheck } from '@/lib/materials'
 import { stagger } from '@/lib/motion'
 import { StorageError, askToKeepPacks, newRecord, savePack, type SavedPack } from '@/lib/storage'
-import type { Materials, Recording, SendState, SlideFile, WriteState } from '@/types'
+import type { Materials, NotePhoto, Recording, SendState, SlideFile, WriteState } from '@/types'
 
 export default function App() {
   const { theme, chooseTheme } = useTheme()
   const limits = useLimits()
-  const [notes, setNotes] = useNotesDraft()
+  // Typed notes gave way to photos of handwritten notes. A draft typed in an earlier version is
+  // never sent; the hook stays so that "Delete all" still clears it.
+  const [, setNotes] = useNotesDraft()
   const [recording, setRecording] = useState<Recording | null>(null)
   const [recordingLive, setRecordingLive] = useState(false)
   const [slides, setSlides] = useState<SlideFile[]>([])
+  const [photos, setPhotos] = useState<NotePhoto[]>([])
   const [sendState, setSendState] = useState<SendState>({ status: 'idle' })
   // The student's corrected copy of what Lucy heard and read; the AI will write from this.
   const [draft, setDraft] = useState<Materials | null>(null)
@@ -66,7 +68,6 @@ export default function App() {
     })
     const generate = generateRef.current
     if (generate && !generate.disabled) generate.focus()
-    else document.getElementById('notes')?.focus()
   }
 
   async function handleGenerate() {
@@ -75,21 +76,18 @@ export default function App() {
     forgetWrite()
     let materials: Materials
     try {
-      const { job_id, receipt } = await sendSession(notes, slides, recording)
+      const { job_id, receipt } = await sendSession('', slides, recording, photos)
       setSendState({ status: 'working', step: 'Waiting to start', receipt })
       const job = await waitForJob(job_id, (step) => setSendState({ status: 'working', step, receipt }))
       if (!job.materials) throw new ApiError('Lucy could not read your material.')
       materials = job.materials
-      setSendState({ status: 'ready', materials, recording, slides })
+      setSendState({ status: 'ready', materials, recording, slides, photos })
       setDraft(materials)
     } catch (error) {
       setSendState({ status: 'error', message: messageOf(error) })
       return
     }
-    // Nothing to check (notes only), so Lucy goes straight on to writing, unless the notes are already
-    // too long: then the bar explains instead of sending a request that would be refused.
-    const tooLong = limits !== null && notes.length > limits.max_pack_chars
-    if (!needsCheck(materials) && !tooLong) await handleWrite(materials)
+    if (!needsCheck(materials)) await handleWrite(materials)
   }
 
   // Writes from the corrected copy. The review state stays as it is, so a failure loses no corrections.
@@ -102,6 +100,7 @@ export default function App() {
     update({ status: 'writing', step: 'Sending to Lucy' })
     let record: SavedPack
     try {
+      const notes = materials.notes ?? ''
       const { job_id } = await writePack(notes, materials)
       const job = await waitForJob(job_id, (step) => update({ status: 'writing', step }))
       if (!job.pack) throw new ApiError('Lucy could not write your study pack.')
@@ -145,9 +144,13 @@ export default function App() {
 
   // Adding or removing a slide makes a new list, and a new recording is a new object, so comparing
   // them with what Lucy read tells us whether the panel still matches the inputs.
-  const inputsChanged = sendState.status === 'ready' && (sendState.recording !== recording || sendState.slides !== slides)
+  const inputsChanged =
+    sendState.status === 'ready' &&
+    (sendState.recording !== recording || sendState.slides !== slides || sendState.photos !== photos)
   const corrected = sendState.status === 'ready' && draft !== null && hasCorrections(sendState.materials, draft)
-  const packText = draft ? [notes, draft.transcript ?? '', ...draft.slides.map((slide) => slide.text)].join('\n') : ''
+  const packText = draft
+    ? [draft.notes ?? '', draft.transcript ?? '', ...draft.slides.map((slide) => slide.text)].join('\n')
+    : ''
   const packSize = draft ? { chars: packText.length } : null
   const showPanel = sendState.status === 'ready' && needsCheck(sendState.materials)
 
@@ -183,17 +186,14 @@ export default function App() {
           />
           <Hero />
 
-          <div className="grid gap-6 lg:grid-cols-5">
-            <NotesEditor
-              value={notes}
-              onChange={(value) => {
-                setNotes(value)
-                clearWriteError()
-              }}
-              className="lg:col-span-3"
-            />
-            <motion.div variants={stagger} className="flex flex-col gap-6 lg:col-span-2">
-              <Recorder recording={recording} onChange={setRecording} onLiveChange={setRecordingLive} />
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Recorder recording={recording} onChange={setRecording} onLiveChange={setRecordingLive} />
+            <motion.div variants={stagger} className="flex flex-col gap-6">
+              <NotesPhotos
+                photos={photos}
+                onAdd={(added) => setPhotos((current) => [...current, ...added])}
+                onRemove={(id) => setPhotos((current) => current.filter((photo) => photo.id !== id))}
+              />
               <SlideDropZone
                 files={slides}
                 onAdd={(added) => setSlides((current) => [...current, ...added])}
@@ -220,7 +220,7 @@ export default function App() {
 
           <GenerateBar
             generateRef={generateRef}
-            notesWords={countWords(notes)}
+            photoCount={photos.length}
             recording={recording}
             recordingLive={recordingLive}
             slideCount={slides.length}

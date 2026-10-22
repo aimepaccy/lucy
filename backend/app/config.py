@@ -29,6 +29,9 @@ class Settings(BaseSettings):
     transcribe_api_key: SecretStr = SecretStr('')
     transcribe_model: str = 'whisper-large-v3-turbo'
 
+    # A model that can read images, for photos of handwritten notes. Same provider as the LLM.
+    vision_model: str = 'qwen/qwen3.8-27b'
+
     # Further reading. Without a YouTube key the videos are left out; without an NCBI key
     # PubMed and StatPearls still work, at 3 requests a second instead of 10.
     youtube_api_key: SecretStr = SecretStr('')

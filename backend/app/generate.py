@@ -58,6 +58,8 @@ Rules:
 - Use only what the material teaches. If the material is short, write fewer items. Never pad with \
 facts from elsewhere.
 - Cover every topic the material teaches. Leaving a topic out is worse than a longer summary.
+- Teach only the clinical teaching. Leave out jokes, small talk, personal remarks, and talk that does \
+not teach, such as plans for the day.
 - Use the material's own wording for doses, numbers, thresholds and drug names. Add no details it does \
 not give (for example, do not turn "oxygen" into "high-flow oxygen").
 - Every teaching point, flashcard and question has a quote: 6 to 25 words copied exactly, word for word, \

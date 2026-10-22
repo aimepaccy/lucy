@@ -185,7 +185,9 @@ export function Recorder({ recording, onChange, onLiveChange }: RecorderProps) {
           </p>
         )}
         {view === 'live' && (
-          <p className="text-xs text-muted-foreground">Stop keeps the recording. To throw it away, stop, then eject.</p>
+          <p className="text-xs text-muted-foreground">
+            Pause for anything off the record. Stop keeps the recording; to throw it away, stop, then eject.
+          </p>
         )}
         {view === 'done' && recording && (
           <p className="text-xs text-muted-foreground tabular-nums">

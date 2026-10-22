@@ -11,7 +11,7 @@ import type { Limits, PackSize, Recording, SendState, SessionReceipt, WriteState
 
 type GenerateBarProps = {
   generateRef: Ref<HTMLButtonElement>
-  notesWords: number
+  photoCount: number
   recording: Recording | null
   recordingLive: boolean
   slideCount: number
@@ -29,10 +29,11 @@ type GenerateBarProps = {
   onDismiss: () => void
 }
 
-function describeReceipt({ notes_words, slides, audio }: SessionReceipt) {
+function describeReceipt({ notes_words, slides, audio, photos }: SessionReceipt) {
   const parts = []
   if (notes_words > 0) parts.push(`${plural(notes_words, 'word')} of notes`)
   if (audio) parts.push(`a recording (${formatFileSize(audio.size_bytes)})`)
+  if (photos.length > 0) parts.push(`${plural(photos.length, 'photo')} of notes`)
   if (slides.length > 0) {
     const bytes = slides.reduce((total, slide) => total + slide.size_bytes, 0)
     parts.push(`${plural(slides.length, 'slide file')} (${formatFileSize(bytes)})`)
@@ -43,7 +44,7 @@ function describeReceipt({ notes_words, slides, audio }: SessionReceipt) {
 
 export function GenerateBar({
   generateRef,
-  notesWords,
+  photoCount,
   recording,
   recordingLive,
   slideCount,
@@ -65,13 +66,13 @@ export function GenerateBar({
   const busy = sendState.status === 'sending' || sendState.status === 'working' || writing
 
   const chips = [
-    notesWords > 0 && { key: 'notes', icon: NotebookPen, label: `${plural(notesWords, 'word')} of notes` },
     recording && {
       key: 'audio',
       icon: Mic,
       label: recording.durationSec !== null ? `${formatDuration(recording.durationSec)} recording` : 'Audio file',
     },
     recordingLive && { key: 'live', icon: Mic, label: 'Recording in progress: stop it to send' },
+    photoCount > 0 && { key: 'photos', icon: NotebookPen, label: `${plural(photoCount, 'photo')} of notes` },
     slideCount > 0 && { key: 'slides', icon: Presentation, label: plural(slideCount, 'slide file') },
   ].filter((chip) => chip !== false && chip !== null)
 
@@ -83,7 +84,7 @@ export function GenerateBar({
   const enabled = chips.length > 0 && !busy && !recordingLive && !tooLong
 
   // Check is skipped when there is nothing to check (notes only).
-  const willCheck = reviewing ? needsCheck(sendState.materials) : recording !== null || slideCount > 0
+  const willCheck = reviewing ? needsCheck(sendState.materials) : recording !== null || slideCount > 0 || photoCount > 0
   const steps: StepKey[] = willCheck ? ['upload', 'read', 'check', 'write'] : ['upload', 'read', 'write']
 
   function stepNow(): StepKey | 'done' | null {
@@ -173,7 +174,7 @@ export function GenerateBar({
                   exit={{ opacity: 0 }}
                   className="text-sm text-muted-foreground"
                 >
-                  Add notes, a recording or slides to begin.
+                  Record a round, or add photos of your notes or slides, to begin.
                 </motion.p>
               ) : (
                 chips.map(({ key, icon: Icon, label }) => (

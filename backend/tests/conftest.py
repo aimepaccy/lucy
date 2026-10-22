@@ -35,6 +35,24 @@ def fake_transcribe(monkeypatch):
     return calls
 
 
+FAKE_HANDWRITING = 'Silent chest = life threatening'
+
+
+@pytest.fixture(autouse=True)
+def fake_read_handwriting(monkeypatch):
+    """Stands in for the vision model: records each photo it is sent and returns fixed text."""
+    from app import providers
+
+    calls = []
+
+    def read_handwriting(jpeg):
+        calls.append(jpeg)
+        return FAKE_HANDWRITING
+
+    monkeypatch.setattr(providers, 'read_handwriting', read_handwriting)
+    return calls
+
+
 FAKE_NOTES = 'Give prednisolone 40 mg once daily for five days in acute asthma.'
 
 

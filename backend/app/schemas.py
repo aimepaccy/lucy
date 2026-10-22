@@ -9,6 +9,7 @@ MAX_NOTES_CHARS = 20_000
 # Far above what fits in one study pack; the token budget is the real limit. This only stops absurd requests.
 MAX_TEXT_CHARS = 200_000
 AudioKind = Literal['webm', 'ogg', 'mp4', 'wav', 'mp3', 'flac']
+PhotoKind = Literal['jpeg', 'png', 'webp']
 
 
 class Health(BaseModel):
@@ -27,10 +28,17 @@ class AudioReceipt(BaseModel):
     size_bytes: int
 
 
+class PhotoReceipt(BaseModel):
+    name: str
+    kind: PhotoKind
+    size_bytes: int
+
+
 class SessionReceipt(BaseModel):
     notes_words: int
     slides: list[SlideReceipt]
     audio: AudioReceipt | None
+    photos: list[PhotoReceipt]
 
 
 class SlideText(BaseModel):
@@ -42,6 +50,8 @@ class SlideText(BaseModel):
 
 class Materials(BaseModel):
     transcript: str | None
+    # Handwritten notes as Lucy read them from photos, in the order the photos were added.
+    notes: str | None = None
     slides: list[SlideText]
     warnings: list[str]
 
@@ -171,6 +181,8 @@ class Limits(BaseModel):
     max_slide_files: int
     max_slide_mb: int
     max_audio_mb: int
+    max_photos: int
+    max_photo_mb: int
     max_notes_chars: int
     # About how many words of material fit in one study pack with the provider's per-minute allowance.
     max_pack_words: int

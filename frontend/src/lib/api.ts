@@ -1,4 +1,4 @@
-import type { JobCreated, JobState, Limits, Materials, Reading, Recording, SlideFile } from '@/types'
+import type { JobCreated, JobState, Limits, Materials, NotePhoto, Reading, Recording, SlideFile } from '@/types'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 // Long enough for a full set of slides on slow Wi-Fi.
@@ -33,13 +33,19 @@ async function request<T>(path: string, init: RequestInit, timeoutMs: number, sl
   return response.json()
 }
 
-export function sendSession(notes: string, slides: SlideFile[], recording: Recording | null): Promise<JobCreated> {
+export function sendSession(
+  notes: string,
+  slides: SlideFile[],
+  recording: Recording | null,
+  photos: NotePhoto[],
+): Promise<JobCreated> {
   // FormData becomes a multipart request. The browser sets the Content-Type header,
   // including the boundary that separates the parts, so we must not set it ourselves.
   const body = new FormData()
   body.append('notes', notes)
   for (const slide of slides) body.append('slides', slide.file)
   if (recording) body.append('audio', recording.file, recording.name)
+  for (const photo of photos) body.append('photos', photo.file)
 
   return request<JobCreated>('/api/sessions', { method: 'POST', body }, UPLOAD_TIMEOUT_MS)
 }

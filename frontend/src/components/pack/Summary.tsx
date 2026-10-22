@@ -61,7 +61,9 @@ export function Summary({ pack }: { pack: StudyPack }) {
                 <Eye className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden="true" />
                 Parts of your session the pack does not quote ({pack.uncovered.length} of {pack.passage_count})
               </h3>
-              <p className="text-sm text-muted-foreground">Read these yourself: they may hold teaching the pack leaves out.</p>
+              <p className="text-sm text-muted-foreground">
+                Lucy leaves out jokes and small talk. Read these yourself in case they hold teaching the pack missed.
+              </p>
               <ul className="flex flex-col gap-2">
                 {pack.uncovered.map((passage, index) => (
                   <li key={index} className="rounded-md border bg-background/70 p-3 text-sm leading-relaxed whitespace-pre-line">

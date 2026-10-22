@@ -26,8 +26,8 @@ export function Hero() {
         </motion.span>
       </h1>
       <motion.p variants={rise} className="mt-5 max-w-2xl text-base text-pretty text-muted-foreground sm:text-lg">
-        Record a role-played round, add your notes and slides, and Lucy builds a summary, flashcards,
-        an exam-style quiz and further reading from credible sources.
+        Press record on a role-played round, add photos of your notes or the slides if you have them, and
+        Lucy builds a summary, flashcards, an exam-style quiz and further reading from credible sources.
       </motion.p>
     </motion.section>
   )

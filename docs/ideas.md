@@ -22,6 +22,14 @@ Each student signs in and finds their packs on any device.
 - Brings in authentication (who you are) and authorisation (what you may see), password resets and account deletion.
 - A free hosted option such as Supabase (used in an earlier project) would cover sign-in and a database.
 
+### Groups across sites (from classmates, 2026-10-22)
+Personal by default; students can form a group whose packs are pooled, so a student at one hospital learns from a round at another, and the AI can draw on the whole group's material (retrieval over the group's packs, the same machinery as the priority idea above).
+- Pulls against consultant privacy: a group spreads teaching beyond the room. Share packs (teaching points), never audio or transcripts; the consultant's consent sets the level ("for you only" or "for your group"); no teacher named by default.
+- Needs accounts and authorisation (role-based access), so it follows student accounts.
+
+### Keep what was taught, not what was said (consultant trust, 2026-10-22)
+Consultants may not want a word-for-word record of what they said. After the pack is written, do not save the transcript; keep the pack with its short checked quotes. Trade-off: the student cannot go back to the transcript, and the chat (phase 8) works from the pack. Together with no stored audio and pausing for off the record, this is the promise to make to consultants.
+
 ### Organise packs by topic, day, week and rotation
 Packs grouped and filtered by date, week, rotation (medicine, surgery, paediatrics...) and topic, with a clear, calm layout.
 - Can be built in the browser with what exists now (IndexedDB indexes); no accounts needed.
